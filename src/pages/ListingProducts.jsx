@@ -1,8 +1,7 @@
-"use client"
-
 import { useState, useMemo } from "react"
 import { Sidebar } from "../components/Sidebar"
 import DataTable from "react-data-table-component"
+import { Bars3Icon } from "@heroicons/react/24/solid"
 
 const ListingProducts = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -41,32 +40,48 @@ const ListingProducts = () => {
             name: "Product Name",
             selector: row => row.name,
             sortable: true,
+            cell: row => (
+                <div className="py-2 font-medium">{row.name}</div>
+            ),
         },
         {
-            name: "Price ($)",
+            name: "Price",
             selector: row => row.price,
             sortable: true,
-            cell: row => `$${row.price.toFixed(2)}`,
+            cell: row => (
+                <div className="text-green-400 font-medium">
+                    ${row.price.toFixed(2)}
+                </div>
+            ),
         },
         {
-            name: "Discount (%)",
+            name: "Discount",
             selector: row => row.discount,
             sortable: true,
-            cell: row => `${row.discount}%`,
+            cell: row => (
+                <div className="bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full text-sm">
+                    {row.discount}%
+                </div>
+            ),
         },
         {
             name: "Description",
             selector: row => row.description,
             sortable: true,
             wrap: true,
+            cell: row => (
+                <div className="py-2 text-gray-400">{row.description}</div>
+            ),
         },
         {
             name: "Quantity",
             selector: row => row.quantity,
             sortable: true,
-            style: {
-                justifyContent: "flex-end",
-            },
+            cell: row => (
+                <div className="font-medium">
+                    {row.quantity.toLocaleString()}
+                </div>
+            ),
         },
         {
             name: "Actions",
@@ -74,13 +89,13 @@ const ListingProducts = () => {
                 <div className="flex gap-2">
                     <button
                         onClick={() => handleEdit(row)}
-                        className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                        className="px-3 py-1.5 bg-blue-500/10 text-blue-400 rounded-md hover:bg-blue-500/20 transition-colors text-sm font-medium"
                     >
                         Edit
                     </button>
                     <button
                         onClick={() => handleDelete(row)}
-                        className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+                        className="px-3 py-1.5 bg-red-500/10 text-red-400 rounded-md hover:bg-red-500/20 transition-colors text-sm font-medium"
                     >
                         Delete
                     </button>
@@ -97,7 +112,9 @@ const ListingProducts = () => {
         console.log("Delete:", row)
     }
 
-    const filteredItems = data.filter((item) => item.name && item.name.toLowerCase().includes(filterText.toLowerCase()))
+    const filteredItems = data.filter(
+        (item) => item.name && item.name.toLowerCase().includes(filterText.toLowerCase())
+    )
 
     const subHeaderComponentMemo = useMemo(() => {
         const handleClear = () => {
@@ -108,18 +125,34 @@ const ListingProducts = () => {
         }
 
         return (
-            <div className=" w-full  rounded-md">
-                <input
-                    type="text"
-                    placeholder="Search by product name..."
-                    value={filterText}
-                    onChange={(e) => setFilterText(e.target.value)}
-                    className="px-4 py-2 bg-gray-700 border border-gray-600 rounded-md text-gray-200 focus:outline-none focus:border-blue-500 w-full"
-                />
+            <div className="w-full  gap-4 bg-gray-800 rounded-lg ">
+                <div className="relative flex-1">
+                    <input
+                        type="text"
+                        placeholder="Search by product name..."
+                        value={filterText}
+                        onChange={(e) => setFilterText(e.target.value)}
+                        className="w-full px-4 py-2.5 bg-gray-900 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:border-blue-500 pl-10"
+                    />
+                    <svg
+                        className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        />
+                    </svg>
+                </div>
                 {filterText && (
                     <button
                         onClick={handleClear}
-                        className="px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors sm:w-auto w-full"
+                        className="px-4 py-2 bg-gray-900 text-gray-300 rounded-lg hover:bg-gray-800 transition-colors font-medium"
                     >
                         Clear
                     </button>
@@ -131,17 +164,18 @@ const ListingProducts = () => {
     const customStyles = {
         table: {
             style: {
-                backgroundColor: "#1f2937",
+                backgroundColor: "#111827",
                 color: "#e5e7eb",
             },
         },
         rows: {
             style: {
-                backgroundColor: "#1f2937",
+                backgroundColor: "#111827",
                 color: "#e5e7eb",
-                minHeight: "52px",
+                minHeight: "60px",
                 "&:hover": {
-                    backgroundColor: "#374151",
+                    backgroundColor: "#1f2937",
+                    cursor: "pointer",
                 },
             },
         },
@@ -150,25 +184,37 @@ const ListingProducts = () => {
                 backgroundColor: "#111827",
                 color: "#e5e7eb",
                 minHeight: "52px",
+                borderBottomWidth: "1px",
+                borderBottomColor: "#374151",
+            },
+        },
+        headCells: {
+            style: {
+                paddingLeft: "16px",
+                paddingRight: "16px",
+                fontWeight: "600",
             },
         },
         cells: {
             style: {
                 paddingLeft: "16px",
                 paddingRight: "16px",
-                paddingTop: "8px",
-                paddingBottom: "8px",
             },
         },
         pagination: {
             style: {
-                backgroundColor: "#1f2937",
+                backgroundColor: "#111827",
                 color: "#e5e7eb",
-                minHeight: "52px",
+                borderTopWidth: "1px",
+                borderTopColor: "#374151",
             },
             pageButtonsStyle: {
                 color: "#e5e7eb",
                 fill: "#e5e7eb",
+                "&:disabled": {
+                    opacity: "0.5",
+                    cursor: "not-allowed",
+                },
             },
         },
     }
@@ -181,15 +227,7 @@ const ListingProducts = () => {
                         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                         className="p-2 rounded-lg hover:bg-gray-700 transition-colors text-gray-200"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-6 w-6"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
+                        <Bars3Icon className="h-6 w-6" />
                     </button>
                     <h1 className="text-xl font-semibold text-white">Products Listing</h1>
                 </div>
@@ -203,6 +241,7 @@ const ListingProducts = () => {
                             columns={columns}
                             data={filteredItems}
                             pagination
+                            paginationRowsPerPageOptions={[5, 10, 15, 20, 25, 30]}
                             paginationResetDefaultPage={resetPaginationToggle}
                             subHeader
                             subHeaderComponent={subHeaderComponentMemo}
@@ -219,4 +258,3 @@ const ListingProducts = () => {
 }
 
 export default ListingProducts
-
