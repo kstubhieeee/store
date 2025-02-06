@@ -13,6 +13,7 @@ const ListingProducts = () => {
     const [editingId, setEditingId] = useState(null)
     const [editForm, setEditForm] = useState({})
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, product: null })
+    const [error, setError] = useState("")
 
     const dispatch = useDispatch()
     const products = useSelector((state) => state.products.items)
@@ -28,36 +29,63 @@ const ListingProducts = () => {
         setEditingId(row._id)
         setEditForm({
             name: row.name,
-            price: Number(row.price),
-            discount: Number(row.discount),
+            price: row.price.toString(),
+            discount: row.discount.toString(),
             description: row.description,
-            quantity: Number(row.quantity)
+            quantity: row.quantity.toString()
         })
     }
 
     const handleEditChange = (e, field) => {
-        const value = field === 'price' || field === 'discount' || field === 'quantity'
-            ? Number(e.target.value)
-            : e.target.value;
         setEditForm(prev => ({
             ...prev,
-            [field]: value
+            [field]: e.target.value
         }))
     }
 
+    const validateNumberField = (value, fieldName) => {
+        const num = Number(value)
+        if (isNaN(num)) {
+            throw new Error(`Please enter a valid number for ${fieldName}`)
+        }
+        if (fieldName === 'discount' && (num < 0 || num > 100)) {
+            throw new Error('Discount must be between 0 and 100')
+        }
+        if ((fieldName === 'price' || fieldName === 'quantity') && num < 0) {
+            throw new Error(`${fieldName} cannot be negative`)
+        }
+        return num
+    }
+
     const handleEditSave = async (id) => {
+        setError("")
         try {
-            await dispatch(updateProduct({ id, updates: editForm })).unwrap()
+            const price = validateNumberField(editForm.price, 'price')
+            const discount = validateNumberField(editForm.discount, 'discount')
+            const quantity = validateNumberField(editForm.quantity, 'quantity')
+
+            await dispatch(updateProduct({
+                id,
+                updates: {
+                    name: editForm.name,
+                    price,
+                    discount,
+                    description: editForm.description,
+                    quantity
+                }
+            })).unwrap()
             setEditingId(null)
             setEditForm({})
         } catch (error) {
-            console.error('Failed to update product:', error)
+            setError(error.message)
+            setTimeout(() => setError(""), 3000)
         }
     }
 
     const handleEditCancel = () => {
         setEditingId(null)
         setEditForm({})
+        setError("")
     }
 
     const handleDeleteClick = (row) => {
@@ -98,10 +126,11 @@ const ListingProducts = () => {
             cell: row => (
                 editingId === row._id ? (
                     <input
-                        type="number"
+                        type="text"
                         value={editForm.price}
                         onChange={(e) => handleEditChange(e, 'price')}
                         className="w-20 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-gray-200"
+                        placeholder="e.g., 29.99"
                     />
                 ) : (
                     <div className="text-green-400 font-medium">
@@ -117,10 +146,11 @@ const ListingProducts = () => {
             cell: row => (
                 editingId === row._id ? (
                     <input
-                        type="number"
+                        type="text"
                         value={editForm.discount}
                         onChange={(e) => handleEditChange(e, 'discount')}
                         className="w-20 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-gray-200"
+                        placeholder="0-100"
                     />
                 ) : (
                     <div className="bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full text-sm">
@@ -154,10 +184,11 @@ const ListingProducts = () => {
             cell: row => (
                 editingId === row._id ? (
                     <input
-                        type="number"
+                        type="text"
                         value={editForm.quantity}
                         onChange={(e) => handleEditChange(e, 'quantity')}
                         className="w-20 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-gray-200"
+                        placeholder="e.g., 100"
                     />
                 ) : (
                     <div className="font-medium">
@@ -335,6 +366,11 @@ const ListingProducts = () => {
                 <main className="flex-1 p-6">
                     <div className="max-w-7xl mx-auto bg-gray-800 rounded-lg shadow-md p-6">
                         <h2 className="text-2xl font-semibold text-gray-200 mb-6">Products List</h2>
+                        {error && (
+                            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+                                {error}
+                            </div>
+                        )}
                         <DataTable
                             columns={columns}
                             data={filteredItems}

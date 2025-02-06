@@ -3,14 +3,45 @@ import { Link, useNavigate } from 'react-router-dom';
 
 function SignIn() {
   const navigate = useNavigate();
-  const [tracker, setTracker] = useState("");
+  const [error, setError] = useState("");
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) {
+      throw new Error('Email is required');
+    }
+    if (!emailRegex.test(email)) {
+      throw new Error('Please enter a valid email address');
+    }
+    return email;
+  };
+
+  const validatePassword = (password) => {
+    if (!password) {
+      throw new Error('Password is required');
+    }
+    if (password.length < 6) {
+      throw new Error('Password must be at least 6 characters long');
+    }
+    return password;
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-     if (e.target.email.value === import.meta.env.VITE_USERNAME && e.target.password.value === import.meta.env.VITE_PASSWORD) {
-      navigate('/dashboard');
-    } else {
-      setTracker("Invalid email id or password")
+    setError("");
+
+    try {
+      const email = validateEmail(e.target.email.value);
+      const password = validatePassword(e.target.password.value);
+
+      if (email === import.meta.env.VITE_USERNAME && password === import.meta.env.VITE_PASSWORD) {
+        navigate('/dashboard');
+      } else {
+        setError("Invalid email or password");
+      }
+    } catch (error) {
+      setError(error.message);
+      setTimeout(() => setError(""), 3000); // Clear error after 3 seconds
     }
   };
 
@@ -18,10 +49,15 @@ function SignIn() {
     <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
       <div className="max-w-md w-full bg-gray-800 rounded-lg shadow-xl p-8">
         <h2 className="text-3xl font-bold text-center text-white mb-8">Login</h2>
+        {error && (
+          <div className="mb-6 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+            {error}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <input
-              type="email"
+              type="text"
               placeholder="Email"
               className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
               required
@@ -76,10 +112,6 @@ function SignIn() {
             <span>Login with Google</span>
           </button>
         </div>
-
-        {tracker && (
-          <div className="mt-4 text-center text-red-500">{tracker}</div>
-        )}
       </div>
     </div>
   );

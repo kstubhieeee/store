@@ -14,6 +14,7 @@ const AddProducts = () => {
         description: '',
         quantity: ''
     });
+    const [error, setError] = useState('');
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -26,15 +27,35 @@ const AddProducts = () => {
         }));
     };
 
+    const validateNumberField = (value, fieldName) => {
+        const num = Number(value);
+        if (isNaN(num)) {
+            throw new Error(`Please enter a valid number for ${fieldName}`);
+        }
+        if (fieldName === 'discount' && (num < 0 || num > 100)) {
+            throw new Error('Discount must be between 0 and 100');
+        }
+        if ((fieldName === 'price' || fieldName === 'quantity') && num < 0) {
+            throw new Error(`${fieldName} cannot be negative`);
+        }
+        return num;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
+        
         try {
+            const price = validateNumberField(formData.price, 'price');
+            const discount = validateNumberField(formData.discount, 'discount');
+            const quantity = validateNumberField(formData.quantity, 'quantity');
+
             await dispatch(addProduct({
                 name: formData.productName,
-                price: Number(formData.price),
-                discount: Number(formData.discount),
+                price,
+                discount,
                 description: formData.description,
-                quantity: Number(formData.quantity)
+                quantity
             })).unwrap();
 
             setFormData({
@@ -46,7 +67,8 @@ const AddProducts = () => {
             });
             navigate('/listing');
         } catch (error) {
-            console.error('Failed to add product:', error);
+            setError(error.message);
+            setTimeout(() => setError(''), 3000); // Clear error after 3 seconds
         }
     };
 
@@ -68,6 +90,11 @@ const AddProducts = () => {
                 <main className="flex-1 p-6">
                     <div className="max-w-2xl mx-auto bg-gray-800 rounded-lg shadow-md p-6">
                         <h2 className="text-2xl font-semibold text-gray-200 mb-6">Add New Product</h2>
+                        {error && (
+                            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+                                {error}
+                            </div>
+                        )}
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
                                 <label htmlFor="productName" className="block text-gray-300 mb-2">
@@ -90,15 +117,14 @@ const AddProducts = () => {
                                         Price ($)
                                     </label>
                                     <input
-                                        type="number"
+                                        type="text"
                                         id="price"
                                         name="price"
                                         value={formData.price}
                                         onChange={handleChange}
                                         className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md text-gray-200 focus:outline-none focus:border-blue-500"
                                         required
-                                        min="0"
-                                        step="0.01"
+                                        placeholder="Enter price (e.g., 29.99)"
                                     />
                                 </div>
 
@@ -107,14 +133,13 @@ const AddProducts = () => {
                                         Discount (%)
                                     </label>
                                     <input
-                                        type="number"
+                                        type="text"
                                         id="discount"
                                         name="discount"
                                         value={formData.discount}
                                         onChange={handleChange}
                                         className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md text-gray-200 focus:outline-none focus:border-blue-500"
-                                        min="0"
-                                        max="100"
+                                        placeholder="Enter discount (0-100)"
                                     />
                                 </div>
                             </div>
@@ -124,14 +149,14 @@ const AddProducts = () => {
                                     Quantity
                                 </label>
                                 <input
-                                    type="number"
+                                    type="text"
                                     id="quantity"
                                     name="quantity"
                                     value={formData.quantity}
                                     onChange={handleChange}
                                     className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md text-gray-200 focus:outline-none focus:border-blue-500"
                                     required
-                                    min="0"
+                                    placeholder="Enter quantity (e.g., 100)"
                                 />
                             </div>
 
