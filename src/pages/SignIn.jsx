@@ -7,7 +7,11 @@ function SignIn() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    navigate('/dashboard');
+     if (e.target.email.value === import.meta.env.VITE_USERNAME && e.target.password.value === import.meta.env.VITE_PASSWORD) {
+      navigate('/dashboard');
+    } else {
+      setTracker("Invalid email id or password")
+    }
   };
 
   return (
@@ -21,6 +25,7 @@ function SignIn() {
               placeholder="Email"
               className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
               required
+              name="email"
             />
           </div>
 
@@ -30,6 +35,7 @@ function SignIn() {
               placeholder="Password"
               className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
               required
+              name="password"
             />
           </div>
 
