@@ -1,7 +1,7 @@
-import express from 'express';
-import { MongoClient, ObjectId } from 'mongodb';
-import cors from 'cors';
-import dotenv from 'dotenv';
+import express from "express";
+import { MongoClient, ObjectId } from "mongodb";
+import cors from "cors";
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -19,89 +19,86 @@ let db;
 async function connectToDb() {
   try {
     await client.connect();
-    db = client.db('store');
-    console.log('Connected to MongoDB');
+    db = client.db("store");
+    console.log("Connected to MongoDB");
   } catch (error) {
-    console.error('Could not connect to MongoDB:', error);
+    console.error("Could not connect to MongoDB:", error);
   }
 }
 
 connectToDb();
 
 // Get all products
-app.get('/api/products', async (req, res) => {
+app.get("/api/products", async (req, res) => {
   try {
-    const products = await db.collection('products').find({}).toArray();
+    const products = await db.collection("products").find({}).toArray();
     res.json(products);
   } catch (error) {
-    console.error('Error fetching products:', error);
-    res.status(500).json({ message: 'Error fetching products' });
+    console.error("Error fetching products:", error);
+    res.status(500).json({ message: "Error fetching products" });
   }
 });
 
-// Add a new product
-app.post('/api/products', async (req, res) => {
+app.post("/api/products", async (req, res) => {
   try {
     const product = req.body;
-    const result = await db.collection('products').insertOne(product);
+    const result = await db.collection("products").insertOne(product);
     const newProduct = { ...product, _id: result.insertedId };
     res.status(201).json(newProduct);
   } catch (error) {
-    console.error('Error adding product:', error);
-    res.status(500).json({ message: 'Error adding product' });
+    console.error("Error adding product:", error);
+    res.status(500).json({ message: "Error adding product" });
   }
 });
 
-// Update a product
-app.put('/api/products/:id', async (req, res) => {
+app.put("/api/products/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
 
-    // Validate ObjectId
     if (!ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Invalid product ID' });
+      return res.status(400).json({ message: "Invalid product ID" });
     }
 
-    const result = await db.collection('products').findOneAndUpdate(
-      { _id: new ObjectId(id) },
-      { $set: updates },
-      { returnDocument: 'after' }
-    );
+    const result = await db
+      .collection("products")
+      .findOneAndUpdate(
+        { _id: new ObjectId(id) },
+        { $set: updates },
+        { returnDocument: "after" }
+      );
 
     if (!result) {
-      return res.status(404).json({ message: 'Product not found' });
+      return res.status(404).json({ message: "Product not found" });
     }
 
     res.json(result);
   } catch (error) {
-    console.error('Error updating product:', error);
-    res.status(500).json({ message: 'Error updating product' });
+    console.error("Error updating product:", error);
+    res.status(500).json({ message: "Error updating product" });
   }
 });
 
-// Delete a product
-app.delete('/api/products/:id', async (req, res) => {
+app.delete("/api/products/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Validate ObjectId
     if (!ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Invalid product ID' });
+      return res.status(400).json({ message: "Invalid product ID" });
     }
 
-    const result = await db.collection('products').deleteOne({
-      _id: new ObjectId(id)
+    const result = await db.collection("products").deleteOne({
+      _id: new ObjectId(id),
     });
 
     if (result.deletedCount === 0) {
-      return res.status(404).json({ message: 'Product not found' });
+      return res.status(404).json({ message: "Product not found" });
     }
 
-    res.json({ message: 'Product deleted successfully', id });
+    res.json({ message: "Product deleted successfully", id });
   } catch (error) {
-    console.error('Error deleting product:', error);
-    res.status(500).json({ message: 'Error deleting product' });
+    console.error("Error deleting product:", error);
+    res.status(500).json({ message: "Error deleting product" });
   }
 });
 
