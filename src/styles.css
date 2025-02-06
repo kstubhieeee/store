@@ -14,7 +14,6 @@
   @apply ml-[70px] mt-[50px] text-red-500;
 }
 
-/* Remove default input styles */
 input {
   background-color: transparent !important;
   -webkit-appearance: none !important;
@@ -22,7 +21,6 @@ input {
   appearance: none !important;
 }
 
-/* Remove autofill background color */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,

@@ -36,8 +36,7 @@ const AddProducts = () => {
                 description: formData.description,
                 quantity: Number(formData.quantity)
             })).unwrap();
-            
-            // Reset form and navigate to listing
+
             setFormData({
                 productName: '',
                 price: '',

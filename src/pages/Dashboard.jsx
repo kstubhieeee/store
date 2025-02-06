@@ -8,7 +8,7 @@ function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleLogout = () => {
-    navigate('/signin');
+    navigate('/');
   };
 
   return (
@@ -23,8 +23,8 @@ function Dashboard() {
           </button>
           <h1 className="text-xl font-semibold text-white">Welcome to Dashboard</h1>
         </div>
-        <button 
-          onClick={handleLogout} 
+        <button
+          onClick={handleLogout}
           className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
         >
           Logout
@@ -34,7 +34,6 @@ function Dashboard() {
         <Sidebar isOpen={isSidebarOpen} />
         <main className="flex-1 p-6">
           <div className="max-w-7xl mx-auto">
-            {/* Add your dashboard content here */}
           </div>
         </main>
       </div>

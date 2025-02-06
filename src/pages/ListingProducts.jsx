@@ -1,24 +1,77 @@
 import { useState, useMemo, useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { fetchProducts, deleteProduct } from "../store/productsSlice"
+import { fetchProducts, deleteProduct, updateProduct } from "../store/productsSlice"
 import { Sidebar } from "../components/Sidebar"
 import DataTable from "react-data-table-component"
 import { Bars3Icon } from "@heroicons/react/24/solid"
+import DeleteConfirmationModal from "../components/DeleteConfirmationModal"
 
 const ListingProducts = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false)
     const [filterText, setFilterText] = useState("")
     const [resetPaginationToggle, setResetPaginationToggle] = useState(false)
+    const [editingId, setEditingId] = useState(null)
+    const [editForm, setEditForm] = useState({})
+    const [deleteModal, setDeleteModal] = useState({ isOpen: false, product: null })
 
-    const dispatch = useDispatch();
-    const products = useSelector((state) => state.products.items);
-    const status = useSelector((state) => state.products.status);
+    const dispatch = useDispatch()
+    const products = useSelector((state) => state.products.items)
+    const status = useSelector((state) => state.products.status)
 
     useEffect(() => {
         if (status === 'idle') {
-            dispatch(fetchProducts());
+            dispatch(fetchProducts())
         }
-    }, [status, dispatch]);
+    }, [status, dispatch])
+
+    const handleEditClick = (row) => {
+        setEditingId(row._id)
+        setEditForm({
+            name: row.name,
+            price: Number(row.price),
+            discount: Number(row.discount),
+            description: row.description,
+            quantity: Number(row.quantity)
+        })
+    }
+
+    const handleEditChange = (e, field) => {
+        const value = field === 'price' || field === 'discount' || field === 'quantity'
+            ? Number(e.target.value)
+            : e.target.value;
+        setEditForm(prev => ({
+            ...prev,
+            [field]: value
+        }))
+    }
+
+    const handleEditSave = async (id) => {
+        try {
+            await dispatch(updateProduct({ id, updates: editForm })).unwrap()
+            setEditingId(null)
+            setEditForm({})
+        } catch (error) {
+            console.error('Failed to update product:', error)
+        }
+    }
+
+    const handleEditCancel = () => {
+        setEditingId(null)
+        setEditForm({})
+    }
+
+    const handleDeleteClick = (row) => {
+        setDeleteModal({ isOpen: true, product: row })
+    }
+
+    const handleDeleteConfirm = async () => {
+        try {
+            await dispatch(deleteProduct(deleteModal.product._id)).unwrap()
+            setDeleteModal({ isOpen: false, product: null })
+        } catch (error) {
+            console.error('Failed to delete product:', error)
+        }
+    }
 
     const columns = [
         {
@@ -26,27 +79,54 @@ const ListingProducts = () => {
             selector: row => row.name,
             sortable: true,
             cell: row => (
-                <div className="py-2 font-medium">{row.name}</div>
+                editingId === row._id ? (
+                    <input
+                        type="text"
+                        value={editForm.name}
+                        onChange={(e) => handleEditChange(e, 'name')}
+                        className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-gray-200"
+                    />
+                ) : (
+                    <div className="py-2 font-medium">{row.name}</div>
+                )
             ),
         },
         {
             name: "Price",
-            selector: row => row.price,
+            selector: row => Number(row.price),
             sortable: true,
             cell: row => (
-                <div className="text-green-400 font-medium">
-                    ${row.price.toFixed(2)}
-                </div>
+                editingId === row._id ? (
+                    <input
+                        type="number"
+                        value={editForm.price}
+                        onChange={(e) => handleEditChange(e, 'price')}
+                        className="w-20 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-gray-200"
+                    />
+                ) : (
+                    <div className="text-green-400 font-medium">
+                        ${Number(row.price).toFixed(2)}
+                    </div>
+                )
             ),
         },
         {
             name: "Discount",
-            selector: row => row.discount,
+            selector: row => Number(row.discount),
             sortable: true,
             cell: row => (
-                <div className="bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full text-sm">
-                    {row.discount}%
-                </div>
+                editingId === row._id ? (
+                    <input
+                        type="number"
+                        value={editForm.discount}
+                        onChange={(e) => handleEditChange(e, 'discount')}
+                        className="w-20 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-gray-200"
+                    />
+                ) : (
+                    <div className="bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full text-sm">
+                        {Number(row.discount)}%
+                    </div>
+                )
             ),
         },
         {
@@ -55,51 +135,76 @@ const ListingProducts = () => {
             sortable: true,
             wrap: true,
             cell: row => (
-                <div className="py-2 text-gray-400">{row.description}</div>
+                editingId === row._id ? (
+                    <input
+                        type="text"
+                        value={editForm.description}
+                        onChange={(e) => handleEditChange(e, 'description')}
+                        className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-gray-200"
+                    />
+                ) : (
+                    <div className="py-2 text-gray-400">{row.description}</div>
+                )
             ),
         },
         {
             name: "Quantity",
-            selector: row => row.quantity,
+            selector: row => Number(row.quantity),
             sortable: true,
             cell: row => (
-                <div className="font-medium">
-                    {row.quantity.toLocaleString()}
-                </div>
+                editingId === row._id ? (
+                    <input
+                        type="number"
+                        value={editForm.quantity}
+                        onChange={(e) => handleEditChange(e, 'quantity')}
+                        className="w-20 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-gray-200"
+                    />
+                ) : (
+                    <div className="font-medium">
+                        {Number(row.quantity).toLocaleString()}
+                    </div>
+                )
             ),
         },
         {
             name: "Actions",
             cell: row => (
                 <div className="flex gap-2">
-                    <button
-                        onClick={() => handleEdit(row)}
-                        className="px-3 py-1.5 bg-blue-500/10 text-blue-400 rounded-md hover:bg-blue-500/20 transition-colors text-sm font-medium"
-                    >
-                        Edit
-                    </button>
-                    <button
-                        onClick={() => handleDelete(row)}
-                        className="px-3 py-1.5 bg-red-500/10 text-red-400 rounded-md hover:bg-red-500/20 transition-colors text-sm font-medium"
-                    >
-                        Delete
-                    </button>
+                    {editingId === row._id ? (
+                        <>
+                            <button
+                                onClick={() => handleEditSave(row._id)}
+                                className="px-3 py-1.5 bg-green-500/10 text-green-400 rounded-md hover:bg-green-500/20 transition-colors text-sm font-medium"
+                            >
+                                Save
+                            </button>
+                            <button
+                                onClick={handleEditCancel}
+                                className="px-3 py-1.5 bg-gray-500/10 text-gray-400 rounded-md hover:bg-gray-500/20 transition-colors text-sm font-medium"
+                            >
+                                Cancel
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button
+                                onClick={() => handleEditClick(row)}
+                                className="px-3 py-1.5 bg-blue-500/10 text-blue-400 rounded-md hover:bg-blue-500/20 transition-colors text-sm font-medium"
+                            >
+                                Edit
+                            </button>
+                            <button
+                                onClick={() => handleDeleteClick(row)}
+                                className="px-3 py-1.5 bg-red-500/10 text-red-400 rounded-md hover:bg-red-500/20 transition-colors text-sm font-medium"
+                            >
+                                Delete
+                            </button>
+                        </>
+                    )}
                 </div>
             ),
         },
     ]
-
-    const handleEdit = (row) => {
-        console.log("Edit:", row)
-    }
-
-    const handleDelete = async (row) => {
-        try {
-            await dispatch(deleteProduct(row._id)).unwrap();
-        } catch (error) {
-            console.error('Failed to delete product:', error);
-        }
-    }
 
     const filteredItems = products.filter(
         (item) => item.name && item.name.toLowerCase().includes(filterText.toLowerCase())
@@ -245,6 +350,13 @@ const ListingProducts = () => {
                     </div>
                 </main>
             </div>
+
+            <DeleteConfirmationModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, product: null })}
+                onConfirm={handleDeleteConfirm}
+                productName={deleteModal.product?.name}
+            />
         </div>
     )
 }
