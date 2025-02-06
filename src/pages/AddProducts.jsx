@@ -1,6 +1,9 @@
 import { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { addProduct } from '../store/productsSlice';
 import { Sidebar } from '../components/Sidebar';
 import { Bars3Icon } from "@heroicons/react/24/solid";
+import { useNavigate } from 'react-router-dom';
 
 const AddProducts = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -12,6 +15,9 @@ const AddProducts = () => {
         quantity: ''
     });
 
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
@@ -20,9 +26,29 @@ const AddProducts = () => {
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log(formData);
+        try {
+            await dispatch(addProduct({
+                name: formData.productName,
+                price: Number(formData.price),
+                discount: Number(formData.discount),
+                description: formData.description,
+                quantity: Number(formData.quantity)
+            })).unwrap();
+            
+            // Reset form and navigate to listing
+            setFormData({
+                productName: '',
+                price: '',
+                discount: '',
+                description: '',
+                quantity: ''
+            });
+            navigate('/listing');
+        } catch (error) {
+            console.error('Failed to add product:', error);
+        }
     };
 
     return (

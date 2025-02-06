@@ -1,4 +1,6 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
+import { useDispatch, useSelector } from "react-redux"
+import { fetchProducts, deleteProduct } from "../store/productsSlice"
 import { Sidebar } from "../components/Sidebar"
 import DataTable from "react-data-table-component"
 import { Bars3Icon } from "@heroicons/react/24/solid"
@@ -8,32 +10,15 @@ const ListingProducts = () => {
     const [filterText, setFilterText] = useState("")
     const [resetPaginationToggle, setResetPaginationToggle] = useState(false)
 
-    const data = [
-        {
-            id: 1,
-            name: "Product 1",
-            price: 100,
-            discount: 10,
-            description: "Description for product 1",
-            quantity: 50000,
-        },
-        {
-            id: 2,
-            name: "Product 2",
-            price: 200,
-            discount: 15,
-            description: "Description for product 2",
-            quantity: 30000,
-        },
-        {
-            id: 3,
-            name: "Product 3",
-            price: 150,
-            discount: 5,
-            description: "Description for product 3",
-            quantity: 40000,
-        },
-    ]
+    const dispatch = useDispatch();
+    const products = useSelector((state) => state.products.items);
+    const status = useSelector((state) => state.products.status);
+
+    useEffect(() => {
+        if (status === 'idle') {
+            dispatch(fetchProducts());
+        }
+    }, [status, dispatch]);
 
     const columns = [
         {
@@ -108,11 +93,15 @@ const ListingProducts = () => {
         console.log("Edit:", row)
     }
 
-    const handleDelete = (row) => {
-        console.log("Delete:", row)
+    const handleDelete = async (row) => {
+        try {
+            await dispatch(deleteProduct(row._id)).unwrap();
+        } catch (error) {
+            console.error('Failed to delete product:', error);
+        }
     }
 
-    const filteredItems = data.filter(
+    const filteredItems = products.filter(
         (item) => item.name && item.name.toLowerCase().includes(filterText.toLowerCase())
     )
 
@@ -125,7 +114,7 @@ const ListingProducts = () => {
         }
 
         return (
-            <div className="w-full  gap-4 bg-gray-800 rounded-lg ">
+            <div className="w-full gap-4 bg-gray-800 rounded-lg">
                 <div className="relative flex-1">
                     <input
                         type="text"
@@ -219,6 +208,10 @@ const ListingProducts = () => {
         },
     }
 
+    if (status === 'loading') {
+        return <div className="text-white text-center mt-8">Loading...</div>;
+    }
+
     return (
         <div className="min-h-screen bg-gray-900">
             <header className="h-16 bg-gray-800 border-b border-gray-700 px-4 flex items-center justify-between">
@@ -247,7 +240,6 @@ const ListingProducts = () => {
                             subHeaderComponent={subHeaderComponentMemo}
                             persistTableHead
                             customStyles={customStyles}
-                            highlightOnHover
                             pointerOnHover
                         />
                     </div>
