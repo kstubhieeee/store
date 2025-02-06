@@ -11,6 +11,8 @@ import {
 } from "@material-tailwind/react";
 import {
     ShoppingBagIcon,
+    PlusCircleIcon,
+    ListBulletIcon,
 } from "@heroicons/react/24/solid";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
@@ -52,7 +54,7 @@ export function Sidebar({ isOpen }) {
                                 className="border-b-0 p-3 hover:bg-gray-700 transition-colors"
                             >
                                 <ListItemPrefix>
-                                    <ShoppingBagIcon className="h-5 w-5 text-blue-400" />
+                                    <ShoppingBagIcon className="h-5 w-5 mr-2 text-blue-400" />
                                 </ListItemPrefix>
                                 <Typography className="mr-auto font-medium text-gray-200">
                                     Products
@@ -60,29 +62,26 @@ export function Sidebar({ isOpen }) {
                             </AccordionHeader>
                         </ListItem>
                         <AccordionBody className="py-1">
-                            <List className="p-0">
-                                <ListItem
-                                    className="hover:bg-gray-700 transition-colors text-gray-300"
-                                >
-                                    <Link
-                                        to="/add"
-                                        className="w-full h-full block"
-                                    >
-                                        Add Products
-                                    </Link>
-                                </ListItem>
-                                <ListItem
-                                    className="hover:bg-gray-700 transition-colors text-gray-300"
-                                >
-                                    <Link
-                                        to="/listing"
-                                        className="w-full h-full block"
-                                    >
-                                        Listing of Products
-                                    </Link>
-                                </ListItem>
-                            </List>
-                        </AccordionBody>
+    <List className="p-0 pl-6 flex flex-col">
+        <Link to="/add">
+            <ListItem className="hover:bg-gray-700 transition-colors text-gray-300">
+                <ListItemPrefix>
+                    <PlusCircleIcon className="h-4 w-4 mr-2 text-blue-400" />
+                </ListItemPrefix>
+                Add Products
+            </ListItem>
+        </Link>
+        <Link to="/listing">
+            <ListItem className="hover:bg-gray-700 transition-colors text-gray-300">
+                <ListItemPrefix>
+                    <ListBulletIcon className="h-4 w-4 mr-2 text-blue-400" />
+                </ListItemPrefix>
+                Listing of Products
+            </ListItem>
+        </Link>
+    </List>
+</AccordionBody>
+
                     </Accordion>
                 </List>
             </Card>
