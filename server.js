@@ -2,6 +2,9 @@ import express from "express";
 import { MongoClient, ObjectId } from "mongodb";
 import cors from "cors";
 import dotenv from "dotenv";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 
 dotenv.config();
 
@@ -10,6 +13,38 @@ const port = 5000;
 
 app.use(cors());
 app.use(express.json());
+app.use('/images', express.static('public/images/store'));
+
+// Create the upload directory if it doesn't exist
+const uploadDir = 'public/images/store';
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Configure multer for image upload
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'public/images/store/');
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Not an image! Please upload an image.'), false);
+    }
+  }
+});
 
 const uri = "mongodb://localhost:27017";
 const client = new MongoClient(uri);
@@ -39,9 +74,20 @@ app.get("/api/products", async (req, res) => {
   }
 });
 
-app.post("/api/products", async (req, res) => {
+app.post("/api/products", upload.single('image'), async (req, res) => {
   try {
-    const product = req.body;
+    const { name, price, discount, description, quantity } = req.body;
+    const imagePath = req.file ? `/images/${req.file.filename}` : null;
+
+    const product = {
+      name,
+      price: Number(price),
+      discount: Number(discount),
+      description,
+      quantity: Number(quantity),
+      imagePath
+    };
+
     const result = await db.collection("products").insertOne(product);
     const newProduct = { ...product, _id: result.insertedId };
     res.status(201).json(newProduct);
@@ -51,14 +97,32 @@ app.post("/api/products", async (req, res) => {
   }
 });
 
-app.put("/api/products/:id", async (req, res) => {
+app.put("/api/products/:id", upload.single('image'), async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
+    const updates = { ...req.body };
+
+    if (req.file) {
+      updates.imagePath = `/images/${req.file.filename}`;
+
+      // Delete old image if it exists
+      const oldProduct = await db.collection("products").findOne({ _id: new ObjectId(id) });
+      if (oldProduct?.imagePath) {
+        const oldImagePath = path.join('public', oldProduct.imagePath);
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+        }
+      }
+    }
 
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid product ID" });
     }
+
+    // Convert numeric fields
+    if (updates.price) updates.price = Number(updates.price);
+    if (updates.discount) updates.discount = Number(updates.discount);
+    if (updates.quantity) updates.quantity = Number(updates.quantity);
 
     const result = await db
       .collection("products")
@@ -85,6 +149,15 @@ app.delete("/api/products/:id", async (req, res) => {
 
     if (!ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid product ID" });
+    }
+
+    // Get the product to delete its image
+    const product = await db.collection("products").findOne({ _id: new ObjectId(id) });
+    if (product?.imagePath) {
+      const imagePath = path.join('public', product.imagePath);
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
     }
 
     const result = await db.collection("products").deleteOne({

@@ -12,9 +12,11 @@ const AddProducts = () => {
         price: '',
         discount: '',
         description: '',
-        quantity: ''
+        quantity: '',
+        image: null
     });
     const [error, setError] = useState('');
+    const [imagePreview, setImagePreview] = useState('');
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -25,6 +27,25 @@ const AddProducts = () => {
             ...prev,
             [name]: value
         }));
+    };
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                setError('Image size should be less than 5MB');
+                return;
+            }
+            if (!file.type.startsWith('image/')) {
+                setError('Please upload an image file');
+                return;
+            }
+            setFormData(prev => ({
+                ...prev,
+                image: file
+            }));
+            setImagePreview(URL.createObjectURL(file));
+        }
     };
 
     const validateNumberField = (value, fieldName) => {
@@ -50,25 +71,33 @@ const AddProducts = () => {
             const discount = validateNumberField(formData.discount, 'discount');
             const quantity = validateNumberField(formData.quantity, 'quantity');
 
-            await dispatch(addProduct({
-                name: formData.productName,
-                price,
-                discount,
-                description: formData.description,
-                quantity
-            })).unwrap();
+            if (!formData.image) {
+                throw new Error('Please select an image');
+            }
+
+            const formDataToSend = new FormData();
+            formDataToSend.append('name', formData.productName);
+            formDataToSend.append('price', price);
+            formDataToSend.append('discount', discount);
+            formDataToSend.append('description', formData.description);
+            formDataToSend.append('quantity', quantity);
+            formDataToSend.append('image', formData.image);
+
+            await dispatch(addProduct(formDataToSend)).unwrap();
 
             setFormData({
                 productName: '',
                 price: '',
                 discount: '',
                 description: '',
-                quantity: ''
+                quantity: '',
+                image: null
             });
+            setImagePreview('');
             navigate('/listing');
         } catch (error) {
             setError(error.message);
-            setTimeout(() => setError(''), 3000); // Clear error after 3 seconds
+            setTimeout(() => setError(''), 3000);
         }
     };
 
@@ -173,6 +202,30 @@ const AddProducts = () => {
                                     className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md text-gray-200 focus:outline-none focus:border-blue-500"
                                     required
                                 ></textarea>
+                            </div>
+
+                            <div>
+                                <label htmlFor="image" className="block text-gray-300 mb-2">
+                                    Product Image
+                                </label>
+                                <input
+                                    type="file"
+                                    id="image"
+                                    name="image"
+                                    onChange={handleImageChange}
+                                    accept="image/*"
+                                    className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md text-gray-200 focus:outline-none focus:border-blue-500"
+                                    required
+                                />
+                                {imagePreview && (
+                                    <div className="mt-2">
+                                        <img
+                                            src={imagePreview}
+                                            alt="Preview"
+                                            className="max-w-xs rounded-lg border border-gray-600"
+                                        />
+                                    </div>
+                                )}
                             </div>
 
                             <button

@@ -14,6 +14,7 @@ const ListingProducts = () => {
     const [editForm, setEditForm] = useState({})
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, product: null })
     const [error, setError] = useState("")
+    const [imagePreview, setImagePreview] = useState('')
 
     const dispatch = useDispatch()
     const products = useSelector((state) => state.products.items)
@@ -56,6 +57,41 @@ const ListingProducts = () => {
         }
         return num
     }
+
+    const handleImageChange = (e, row) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                setError('Image size should be less than 5MB');
+                return;
+            }
+            if (!file.type.startsWith('image/')) {
+                setError('Please upload an image file');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            formData.append('name', editForm.name || row.name);
+            formData.append('price', editForm.price || row.price);
+            formData.append('discount', editForm.discount || row.discount);
+            formData.append('description', editForm.description || row.description);
+            formData.append('quantity', editForm.quantity || row.quantity);
+
+            dispatch(updateProduct({ id: row._id, updates: formData }))
+                .unwrap()
+                .then(() => {
+                    setEditingId(null);
+                    setEditForm({});
+                    setImagePreview('');
+                })
+                .catch(error => {
+                    setError(error.message);
+                    setTimeout(() => setError(''), 3000);
+                });
+        }
+    };
 
     const handleEditSave = async (id) => {
         setError("")
@@ -103,9 +139,53 @@ const ListingProducts = () => {
 
     const columns = [
         {
+            name: "Image",
+            cell: row => (
+                <div className="w-16 h-16 relative group">
+                    {row.imagePath ? (
+                        <>
+                            <img
+                                src={`http://localhost:5000${row.imagePath}`}
+                                alt={row.name}
+                                className="w-full h-full object-cover rounded-lg"
+                            />
+                            <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                                <label className="cursor-pointer">
+                                    <input
+                                        type="file"
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={(e) => handleImageChange(e, row)}
+                                    />
+                                    <i className='bx bx-upload text-white text-xl'></i>
+                                </label>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="w-full h-full bg-gray-700 rounded-lg flex items-center justify-center relative">
+                            <span className="text-gray-400 text-xs">No image</span>
+                            <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                                <label className="cursor-pointer">
+                                    <input
+                                        type="file"
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={(e) => handleImageChange(e, row)}
+                                    />
+                                    <i className='bx bx-upload text-white text-xl'></i>
+                                </label>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            ),
+            width: '100px',
+        },
+        {
             name: "Product Name",
             selector: row => row.name,
             sortable: true,
+            minWidth: "200px",
             cell: row => (
                 editingId === row._id ? (
                     <input
@@ -121,8 +201,9 @@ const ListingProducts = () => {
         },
         {
             name: "Price",
-            selector: row => Number(row.price),
+            selector: row => row.price,
             sortable: true,
+            minWidth: "120px",
             cell: row => (
                 editingId === row._id ? (
                     <input
@@ -130,7 +211,6 @@ const ListingProducts = () => {
                         value={editForm.price}
                         onChange={(e) => handleEditChange(e, 'price')}
                         className="w-20 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-gray-200"
-                        placeholder="e.g., 29.99"
                     />
                 ) : (
                     <div className="text-green-400 font-medium">
@@ -141,8 +221,10 @@ const ListingProducts = () => {
         },
         {
             name: "Discount",
-            selector: row => Number(row.discount),
+            selector: row => row.discount,
             sortable: true,
+            minWidth: "120px",
+            hide: "sm",
             cell: row => (
                 editingId === row._id ? (
                     <input
@@ -150,11 +232,10 @@ const ListingProducts = () => {
                         value={editForm.discount}
                         onChange={(e) => handleEditChange(e, 'discount')}
                         className="w-20 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-gray-200"
-                        placeholder="0-100"
                     />
                 ) : (
                     <div className="bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full text-sm">
-                        {Number(row.discount)}%
+                        {row.discount}%
                     </div>
                 )
             ),
@@ -163,7 +244,8 @@ const ListingProducts = () => {
             name: "Description",
             selector: row => row.description,
             sortable: true,
-            wrap: true,
+            minWidth: "250px",
+            hide: "md",
             cell: row => (
                 editingId === row._id ? (
                     <input
@@ -173,14 +255,18 @@ const ListingProducts = () => {
                         className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-gray-200"
                     />
                 ) : (
-                    <div className="py-2 text-gray-400">{row.description}</div>
+                    <div className="py-2 text-gray-400 truncate max-w-xs">
+                        {row.description}
+                    </div>
                 )
             ),
         },
         {
             name: "Quantity",
-            selector: row => Number(row.quantity),
+            selector: row => row.quantity,
             sortable: true,
+            minWidth: "120px",
+            hide: "sm",
             cell: row => (
                 editingId === row._id ? (
                     <input
@@ -188,7 +274,6 @@ const ListingProducts = () => {
                         value={editForm.quantity}
                         onChange={(e) => handleEditChange(e, 'quantity')}
                         className="w-20 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-gray-200"
-                        placeholder="e.g., 100"
                     />
                 ) : (
                     <div className="font-medium">
@@ -199,19 +284,20 @@ const ListingProducts = () => {
         },
         {
             name: "Actions",
+            minWidth: "200px",
             cell: row => (
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     {editingId === row._id ? (
                         <>
                             <button
                                 onClick={() => handleEditSave(row._id)}
-                                className="px-3 py-1.5 bg-green-500/10 text-green-400 rounded-md hover:bg-green-500/20 transition-colors text-sm font-medium"
+                                className="px-3 py-1.5 bg-green-500/10 text-green-400 rounded-md hover:bg-green-500/20 transition-colors text-sm font-medium whitespace-nowrap"
                             >
                                 Save
                             </button>
                             <button
                                 onClick={handleEditCancel}
-                                className="px-3 py-1.5 bg-gray-500/10 text-gray-400 rounded-md hover:bg-gray-500/20 transition-colors text-sm font-medium"
+                                className="px-3 py-1.5 bg-gray-500/10 text-gray-400 rounded-md hover:bg-gray-500/20 transition-colors text-sm font-medium whitespace-nowrap"
                             >
                                 Cancel
                             </button>
@@ -220,13 +306,13 @@ const ListingProducts = () => {
                         <>
                             <button
                                 onClick={() => handleEditClick(row)}
-                                className="px-3 py-1.5 bg-blue-500/10 text-blue-400 rounded-md hover:bg-blue-500/20 transition-colors text-sm font-medium"
+                                className="px-3 py-1.5 bg-blue-500/10 text-blue-400 rounded-md hover:bg-blue-500/20 transition-colors text-sm font-medium whitespace-nowrap"
                             >
                                 Edit
                             </button>
                             <button
                                 onClick={() => handleDeleteClick(row)}
-                                className="px-3 py-1.5 bg-red-500/10 text-red-400 rounded-md hover:bg-red-500/20 transition-colors text-sm font-medium"
+                                className="px-3 py-1.5 bg-red-500/10 text-red-400 rounded-md hover:bg-red-500/20 transition-colors text-sm font-medium whitespace-nowrap"
                             >
                                 Delete
                             </button>
@@ -289,18 +375,19 @@ const ListingProducts = () => {
     const customStyles = {
         table: {
             style: {
-                backgroundColor: "#111827",
+                backgroundColor: "#1f2937",
                 color: "#e5e7eb",
+                width: "100%",
             },
         },
         rows: {
             style: {
-                backgroundColor: "#111827",
+                backgroundColor: "#1f2937",
                 color: "#e5e7eb",
-                minHeight: "60px",
+                minHeight: "72px",
+                fontSize: "14px",
                 "&:hover": {
-                    backgroundColor: "#1f2937",
-                    cursor: "pointer",
+                    backgroundColor: "#374151",
                 },
             },
         },
@@ -309,36 +396,37 @@ const ListingProducts = () => {
                 backgroundColor: "#111827",
                 color: "#e5e7eb",
                 minHeight: "52px",
-                borderBottomWidth: "1px",
-                borderBottomColor: "#374151",
+                fontSize: "14px",
+                fontWeight: 600,
             },
         },
         headCells: {
             style: {
                 paddingLeft: "16px",
                 paddingRight: "16px",
-                fontWeight: "600",
             },
         },
         cells: {
             style: {
                 paddingLeft: "16px",
                 paddingRight: "16px",
+                paddingTop: "12px",
+                paddingBottom: "12px",
+                wordBreak: "break-word",
             },
         },
         pagination: {
             style: {
-                backgroundColor: "#111827",
+                backgroundColor: "#1f2937",
                 color: "#e5e7eb",
-                borderTopWidth: "1px",
-                borderTopColor: "#374151",
+                fontSize: "13px",
             },
             pageButtonsStyle: {
                 color: "#e5e7eb",
                 fill: "#e5e7eb",
+                backgroundColor: "transparent",
                 "&:disabled": {
                     opacity: "0.5",
-                    cursor: "not-allowed",
                 },
             },
         },
@@ -363,26 +451,27 @@ const ListingProducts = () => {
             </header>
             <div className="flex">
                 <Sidebar isOpen={isSidebarOpen} />
-                <main className="flex-1 p-6">
-                    <div className="max-w-7xl mx-auto bg-gray-800 rounded-lg shadow-md p-6">
-                        <h2 className="text-2xl font-semibold text-gray-200 mb-6">Products List</h2>
-                        {error && (
-                            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
-                                {error}
-                            </div>
-                        )}
-                        <DataTable
-                            columns={columns}
-                            data={filteredItems}
-                            pagination
-                            paginationRowsPerPageOptions={[5, 10, 15, 20, 25, 30]}
-                            paginationResetDefaultPage={resetPaginationToggle}
-                            subHeader
-                            subHeaderComponent={subHeaderComponentMemo}
-                            persistTableHead
-                            customStyles={customStyles}
-                            pointerOnHover
-                        />
+                <main className="flex-1 p-2 sm:p-6">
+                    <div className="max-w-7xl mx-auto bg-gray-800 rounded-lg shadow-md p-3 sm:p-6">
+                        <h2 className="text-xl sm:text-2xl font-semibold text-gray-200 mb-6">Products List</h2>
+                        <div className="overflow-hidden">
+                            <DataTable
+                                columns={columns}
+                                data={filteredItems}
+                                pagination
+                                paginationRowsPerPageOptions={[5, 10, 15, 20, 25, 30]}
+                                paginationResetDefaultPage={resetPaginationToggle}
+                                subHeader
+                                subHeaderComponent={subHeaderComponentMemo}
+                                persistTableHead
+                                customStyles={customStyles}
+                                pointerOnHover
+                                responsive
+                                progressPending={status === 'loading'}
+                                progressComponent={<div className="text-center p-4 text-gray-400">Loading...</div>}
+                                noDataComponent={<div className="text-center p-4 text-gray-400">No products found</div>}
+                            />
+                        </div>
                     </div>
                 </main>
             </div>
