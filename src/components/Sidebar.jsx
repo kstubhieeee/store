@@ -81,7 +81,6 @@ export function Sidebar({ isOpen }) {
         </Link>
     </List>
 </AccordionBody>
-
                     </Accordion>
                 </List>
             </Card>
