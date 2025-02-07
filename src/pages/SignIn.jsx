@@ -41,7 +41,7 @@ function SignIn() {
       }
     } catch (error) {
       setError(error.message);
-      setTimeout(() => setError(""), 3000); // Clear error after 3 seconds
+      setTimeout(() => setError(""), 3000); 
     }
   };
 

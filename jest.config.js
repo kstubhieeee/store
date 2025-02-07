@@ -1,9 +1,8 @@
-// jest.config.js
 export default {
   testEnvironment: "jsdom",
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
   moduleNameMapper: {
-    "^@/(.*)$": "<rootDir>/src/$1", // Adjust this to match your project's alias configuration
+    "^@/(.*)$": "<rootDir>/src/$1",
   },
   transform: {
     "^.+\\.(js|jsx|ts|tsx)$": "babel-jest",
