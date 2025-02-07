@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchProducts } from '../store/productsSlice';
 import { Link } from 'react-router-dom';
@@ -7,12 +7,17 @@ const Homepage = () => {
     const dispatch = useDispatch();
     const products = useSelector((state) => state.products.items);
     const status = useSelector((state) => state.products.status);
+    const [displayCount, setDisplayCount] = useState(6);
 
     useEffect(() => {
         if (status === 'idle') {
             dispatch(fetchProducts());
         }
     }, [status, dispatch]);
+
+    const handleViewMore = () => {
+        setDisplayCount(prevCount => prevCount + 6);
+    };
 
     if (status === 'loading') {
         return (
@@ -21,6 +26,8 @@ const Homepage = () => {
             </div>
         );
     }
+
+    const displayedProducts = products.slice(0, displayCount);
 
     return (
         <div className="min-h-screen bg-gray-900 flex flex-col">
@@ -53,7 +60,7 @@ const Homepage = () => {
 
             <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {products.map((product) => (
+                    {displayedProducts.map((product) => (
                         <div
                             key={product._id}
                             className="bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow"
@@ -104,6 +111,17 @@ const Homepage = () => {
                         </div>
                     ))}
                 </div>
+
+                {displayCount < products.length && (
+                    <div className="mt-8 text-center">
+                        <button
+                            onClick={handleViewMore}
+                            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                            View More
+                        </button>
+                    </div>
+                )}
             </main>
 
             <footer className="bg-gray-800 border-t border-gray-700">
