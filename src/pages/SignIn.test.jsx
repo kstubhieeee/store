@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import SignIn from './SignIn';
-
+import Dashboard from './Dashboard'
 jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'),
   useNavigate: () => jest.fn(),
@@ -12,7 +12,7 @@ describe('SignIn Component', () => {
   test('valid login attempt', async () => {
     render(
       <Router>
-        <SignIn />
+        <Dashboard />
       </Router>
     );
 
