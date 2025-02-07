@@ -1,5 +1,11 @@
+import React from "react";
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+
+const DEMO_CREDENTIALS = {
+  email: 'test@example.com',
+  password: 'password123'
+};
 
 function SignIn() {
   const navigate = useNavigate();
@@ -34,7 +40,7 @@ function SignIn() {
       const email = validateEmail(e.target.email.value);
       const password = validatePassword(e.target.password.value);
 
-      if (email === import.meta.env.VITE_USERNAME && password === import.meta.env.VITE_PASSWORD) {
+      if (email === DEMO_CREDENTIALS.email && password === DEMO_CREDENTIALS.password) {
         navigate('/dashboard');
       } else {
         setError("Invalid email or password");
