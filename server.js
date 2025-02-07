@@ -5,11 +5,14 @@ import dotenv from "dotenv";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 dotenv.config();
 
 const app = express();
 const port = 5000;
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 app.use(cors());
 app.use(express.json());
@@ -63,6 +66,127 @@ async function connectToDb() {
 
 connectToDb();
 
+// User Authentication Routes
+app.post("/api/signup", async (req, res) => {
+  try {
+    const {
+      email,
+      password,
+      firstName,
+      lastName,
+      phone,
+      alternatePhone,
+      dateOfBirth,
+      gender,
+      company,
+      address,
+      city,
+      state,
+      zipCode,
+      country,
+      shippingAddress,
+      shippingCity,
+      shippingState,
+      shippingZipCode,
+      shippingCountry,
+      useShippingForBilling
+    } = req.body;
+
+    // Check if user already exists
+    const existingUser = await db.collection("users").findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create new user
+    const user = {
+      email,
+      password: hashedPassword,
+      firstName,
+      lastName,
+      phone,
+      alternatePhone,
+      dateOfBirth,
+      gender,
+      company,
+      address,
+      city,
+      state,
+      zipCode,
+      country,
+      shippingAddress: useShippingForBilling ? address : shippingAddress,
+      shippingCity: useShippingForBilling ? city : shippingCity,
+      shippingState: useShippingForBilling ? state : shippingState,
+      shippingZipCode: useShippingForBilling ? zipCode : shippingZipCode,
+      shippingCountry: useShippingForBilling ? country : shippingCountry,
+      createdAt: new Date()
+    };
+
+    const result = await db.collection("users").insertOne(user);
+    
+    // Create JWT token
+    const token = jwt.sign(
+      { userId: result.insertedId, email, firstName, lastName },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // Remove password from user object before sending response
+    delete user.password;
+
+    res.status(201).json({
+      token,
+      user: {
+        id: result.insertedId,
+        ...user
+      }
+    });
+  } catch (error) {
+    console.error("Signup error:", error);
+    res.status(500).json({ message: "Error creating user" });
+  }
+});
+
+app.post("/api/signin", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Find user
+    const user = await db.collection("users").findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // Verify password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // Create JWT token
+    const token = jwt.sign(
+      { userId: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // Remove password from user object before sending response
+    delete user.password;
+
+    res.json({
+      token,
+      user
+    });
+  } catch (error) {
+    console.error("Signin error:", error);
+    res.status(500).json({ message: "Error signing in" });
+  }
+});
+
 // Get all products
 app.get("/api/products", async (req, res) => {
   try {
@@ -109,7 +233,7 @@ app.put("/api/products/:id", upload.single('image'), async (req, res) => {
       const oldProduct = await db.collection("products").findOne({ _id: new ObjectId(id) });
       if (oldProduct?.imagePath) {
         const oldImagePath = path.join('public', oldProduct.imagePath);
-        if (fs.existsSync(oldImagePath)) {
+        if (fs. existsSync(oldImagePath)) {
           fs.unlinkSync(oldImagePath);
         }
       }

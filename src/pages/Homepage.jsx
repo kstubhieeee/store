@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchProducts } from '../store/productsSlice';
 import SignInModal from '../components/SignInModal';
 import SignUpModal from '../components/SignUpModal';
+import { Link } from 'react-router-dom';
 
 const Homepage = () => {
     const dispatch = useDispatch();
@@ -11,12 +12,25 @@ const Homepage = () => {
     const [displayCount, setDisplayCount] = useState(6);
     const [isSignInOpen, setIsSignInOpen] = useState(false);
     const [isSignUpOpen, setIsSignUpOpen] = useState(false);
+    const [user, setUser] = useState(null);
 
     useEffect(() => {
         if (status === 'idle') {
             dispatch(fetchProducts());
         }
+
+        // Check for user data in localStorage
+        const userData = localStorage.getItem('user');
+        if (userData) {
+            setUser(JSON.parse(userData));
+        }
     }, [status, dispatch]);
+
+    const handleSignOut = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
+    };
 
     const handleViewMore = () => {
         setDisplayCount(prevCount => prevCount + 6);
@@ -59,13 +73,34 @@ const Homepage = () => {
                                 <a href="#" className="text-gray-300 hover:text-white transition-colors">About</a>
                             </nav>
                         </div>
-                        <div className="flex gap-4">
-                            <button
-                                onClick={handleSignInClick}
-                                className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                            >
-                                Sign In
-                            </button>
+                        <div className="flex items-center gap-4">
+                            {user ? (
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
+                                            <span className="text-white font-medium">
+                                                {user.firstName.charAt(0)}
+                                            </span>
+                                        </div>
+                                        <span className="text-white">
+                                            {user.firstName} {user.lastName}
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={handleSignOut}
+                                        className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
+                                    >
+                                        Sign Out
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={handleSignInClick}
+                                    className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                                >
+                                    Sign In
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

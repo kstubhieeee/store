@@ -1,6 +1,7 @@
 import { Fragment, useState } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { XMarkIcon } from '@heroicons/react/24/outline'
+import axios from 'axios';
 
 export default function SignInModal({ isOpen, onClose, onSignUpClick }) {
   const [error, setError] = useState("");
@@ -9,15 +10,17 @@ export default function SignInModal({ isOpen, onClose, onSignUpClick }) {
     password: ''
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    // Demo credentials check
-    if (formData.email === 'e@e.com' && formData.password === '123456') {
-      window.location.href = '/dashboard';
-    } else {
-      setError("Invalid email or password");
+    try {
+      const response = await axios.post('http://localhost:5000/api/signin', formData);
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      window.location.reload(); // Reload to update the UI with user data
+    } catch (error) {
+      setError(error.response?.data?.message || 'Error signing in');
       setTimeout(() => setError(""), 3000);
     }
   };
@@ -152,7 +155,10 @@ export default function SignInModal({ isOpen, onClose, onSignUpClick }) {
 
                   <div className="mt-6">
                     <button
-                      onClick={onSignUpClick}
+                      onClick={() => {
+                        onClose();
+                        onSignUpClick();
+                      }}
                       className="flex w-full justify-center rounded-md bg-gray-700 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600"
                     >
                       Sign up

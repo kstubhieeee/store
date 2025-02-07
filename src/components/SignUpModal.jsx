@@ -1,6 +1,7 @@
 import { Fragment, useState } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { XMarkIcon } from '@heroicons/react/24/outline'
+import axios from 'axios';
 
 export default function SignUpModal({ isOpen, onClose, onSignInClick }) {
   const [error, setError] = useState("");
@@ -14,20 +15,26 @@ export default function SignUpModal({ isOpen, onClose, onSignInClick }) {
     address: '',
     city: '',
     state: '',
-    zipCode: ''
+    zipCode: '',
+    country: '',
+    dateOfBirth: '',
+    gender: '',
+    company: '',
+    alternatePhone: '',
+    shippingAddress: '',
+    shippingCity: '',
+    shippingState: '',
+    shippingZipCode: '',
+    shippingCountry: '',
+    useShippingForBilling: true
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters long");
       return;
     }
 
@@ -52,16 +59,22 @@ export default function SignUpModal({ isOpen, onClose, onSignInClick }) {
       return;
     }
 
-    // If all validations pass, proceed with signup
-    console.log("Sign up successful", formData);
-    onClose();
+    try {
+      const response = await axios.post('http://localhost:5000/api/signup', formData);
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      window.location.reload();
+    } catch (error) {
+      setError(error.response?.data?.message || 'Error creating account');
+      setTimeout(() => setError(""), 3000);
+    }
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
   };
 
@@ -91,7 +104,7 @@ export default function SignUpModal({ isOpen, onClose, onSignInClick }) {
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-gray-800 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-gray-800 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-6">
                 <div className="absolute right-0 top-0 pr-4 pt-4">
                   <button
                     type="button"
@@ -102,23 +115,28 @@ export default function SignUpModal({ isOpen, onClose, onSignInClick }) {
                     <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                   </button>
                 </div>
-                <div className="sm:mx-auto sm:w-full sm:max-w-lg">
-                  <h2 className="text-center text-2xl font-bold leading-9 text-white">
+                <div className="sm:mx-auto sm:w-full">
+                  <h2 className="text-center text-2xl font-bold leading-9 text-white mb-8">
                     Create an Account
                   </h2>
                 </div>
 
                 {error && (
-                  <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                  <div className="mb-6 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
                     <p className="text-red-400 text-sm">{error}</p>
                   </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+                    {/* Personal Information */}
+                    <div className="sm:col-span-2">
+                      <h3 className="text-lg font-semibold text-white mb-4">Personal Information</h3>
+                    </div>
+
                     <div>
                       <label htmlFor="firstName" className="block text-sm font-medium text-gray-300">
-                        First Name
+                        First Name *
                       </label>
                       <input
                         type="text"
@@ -133,7 +151,7 @@ export default function SignUpModal({ isOpen, onClose, onSignInClick }) {
 
                     <div>
                       <label htmlFor="lastName" className="block text-sm font-medium text-gray-300">
-                        Last Name
+                        Last Name *
                       </label>
                       <input
                         type="text"
@@ -148,7 +166,7 @@ export default function SignUpModal({ isOpen, onClose, onSignInClick }) {
 
                     <div>
                       <label htmlFor="email" className="block text-sm font-medium text-gray-300">
-                        Email
+                        Email *
                       </label>
                       <input
                         type="email"
@@ -163,7 +181,7 @@ export default function SignUpModal({ isOpen, onClose, onSignInClick }) {
 
                     <div>
                       <label htmlFor="phone" className="block text-sm font-medium text-gray-300">
-                        Phone Number
+                        Phone Number *
                       </label>
                       <input
                         type="tel"
@@ -178,38 +196,75 @@ export default function SignUpModal({ isOpen, onClose, onSignInClick }) {
                     </div>
 
                     <div>
-                      <label htmlFor="password" className="block text-sm font-medium text-gray-300">
-                        Password
+                      <label htmlFor="alternatePhone" className="block text-sm font-medium text-gray-300">
+                        Alternate Phone
                       </label>
                       <input
-                        type="password"
-                        name="password"
-                        id="password"
-                        required
-                        value={formData.password}
+                        type="tel"
+                        name="alternatePhone"
+                        id="alternatePhone"
+                        value={formData.alternatePhone}
+                        onChange={handleChange}
+                        placeholder="1234567890"
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 bg-gray-700 text-white shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm sm:leading-6"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-300">
+                        Date of Birth
+                      </label>
+                      <input
+                        type="date"
+                        name="dateOfBirth"
+                        id="dateOfBirth"
+                        value={formData.dateOfBirth}
                         onChange={handleChange}
                         className="mt-2 block w-full rounded-md border-0 py-1.5 bg-gray-700 text-white shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm sm:leading-6"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300">
-                        Confirm Password
+                      <label htmlFor="gender" className="block text-sm font-medium text-gray-300">
+                        Gender
+                      </label>
+                      <select
+                        name="gender"
+                        id="gender"
+                        value={formData.gender}
+                        onChange={handleChange}
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 bg-gray-700 text-white shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm sm:leading-6"
+                      >
+                        <option value="">Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                        <option value="prefer-not-to-say">Prefer not to say</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label htmlFor="company" className="block text-sm font-medium text-gray-300">
+                        Company
                       </label>
                       <input
-                        type="password"
-                        name="confirmPassword"
-                        id="confirmPassword"
-                        required
-                        value={formData.confirmPassword}
+                        type="text"
+                        name="company"
+                        id="company"
+                        value={formData.company}
                         onChange={handleChange}
                         className="mt-2 block w-full rounded-md border-0 py-1.5 bg-gray-700 text-white shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm sm:leading-6"
                       />
                     </div>
 
+                    {/* Billing Address */}
+                    <div className="sm:col-span-2">
+                      <h3 className="text-lg font-semibold text-white mb-4 mt-4">Billing Address</h3>
+                    </div>
+
                     <div className="sm:col-span-2">
                       <label htmlFor="address" className="block text-sm font-medium text-gray-300">
-                        Address
+                        Street Address *
                       </label>
                       <input
                         type="text"
@@ -224,7 +279,7 @@ export default function SignUpModal({ isOpen, onClose, onSignInClick }) {
 
                     <div>
                       <label htmlFor="city" className="block text-sm font-medium text-gray-300">
-                        City
+                        City *
                       </label>
                       <input
                         type="text"
@@ -239,7 +294,7 @@ export default function SignUpModal({ isOpen, onClose, onSignInClick }) {
 
                     <div>
                       <label htmlFor="state" className="block text-sm font-medium text-gray-300">
-                        State
+                        State *
                       </label>
                       <input
                         type="text"
@@ -254,7 +309,7 @@ export default function SignUpModal({ isOpen, onClose, onSignInClick }) {
 
                     <div>
                       <label htmlFor="zipCode" className="block text-sm font-medium text-gray-300">
-                        ZIP Code
+                        ZIP Code *
                       </label>
                       <input
                         type="text"
@@ -264,6 +319,154 @@ export default function SignUpModal({ isOpen, onClose, onSignInClick }) {
                         value={formData.zipCode}
                         onChange={handleChange}
                         placeholder="12345"
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 bg-gray-700 text-white shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm sm:leading-6"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="country" className="block text-sm font-medium text-gray-300">
+                        Country *
+                      </label>
+                      <input
+                        type="text"
+                        name="country"
+                        id="country"
+                        required
+                        value={formData.country}
+                        onChange={handleChange}
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 bg-gray-700 text-white shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm sm:leading-6"
+                      />
+                    </div>
+
+                    {/* Shipping Address */}
+                    <div className="sm:col-span-2">
+                      <h3 className="text-lg font-semibold text-white mb-4 mt-4">Shipping Address</h3>
+                      <div className="flex items-center mb-4">
+                        <input
+                          type="checkbox"
+                          id="useShippingForBilling"
+                          name="useShippingForBilling"
+                          checked={formData.useShippingForBilling}
+                          onChange={handleChange}
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
+                        />
+                        <label htmlFor="useShippingForBilling" className="ml-2 text-sm text-gray-300">
+                          Same as billing address
+                        </label>
+                      </div>
+                    </div>
+
+                    {!formData.useShippingForBilling && (
+                      <>
+                        <div className="sm:col-span-2">
+                          <label htmlFor="shippingAddress" className="block text-sm font-medium text-gray-300">
+                            Street Address *
+                          </label>
+                          <input
+                            type="text"
+                            name="shippingAddress"
+                            id="shippingAddress"
+                            required
+                            value={formData.shippingAddress}
+                            onChange={handleChange}
+                            className="mt-2 block w-full rounded-md border-0 py-1.5 bg-gray-700 text-white shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm sm:leading-6"
+                          />
+                        </div>
+
+                        <div>
+                          <label htmlFor="shippingCity" className="block text-sm font-medium text-gray-300">
+                            City *
+                          </label>
+                          <input
+                            type="text"
+                            name="shippingCity"
+                            id="shippingCity"
+                            required
+                            value={formData.shippingCity}
+                            onChange={handleChange}
+                            className="mt-2 block w-full rounded-md border-0 py-1.5 bg-gray-700 text-white shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm sm:leading-6"
+                          />
+                        </div>
+
+                        <div>
+                          <label htmlFor="shippingState" className="block text-sm font-medium text-gray-300">
+                            State *
+                          </label>
+                          <input
+                            type="text"
+                            name="shippingState"
+                            id="shippingState"
+                            required
+                            value={formData.shippingState}
+                            onChange={handleChange}
+                            className="mt-2 block w-full rounded-md border-0 py-1.5 bg-gray-700 text-white shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm sm:leading-6"
+                          />
+                        </div>
+
+                        <div>
+                          <label htmlFor="shippingZipCode" className="block text-sm font-medium text-gray-300">
+                            ZIP Code *
+                          </label>
+                          <input
+                            type="text"
+                            name="shippingZipCode"
+                            id="shippingZipCode"
+                            required
+                            value={formData.shippingZipCode}
+                            onChange={handleChange}
+                            placeholder="12345"
+                            className="mt-2 block w-full rounded-md border-0 py-1.5 bg-gray-700 text-white shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm sm:leading-6"
+                          />
+                        </div>
+
+                        <div>
+                          <label htmlFor="shippingCountry" className="block text-sm font-medium text-gray-300">
+                            Country *
+                          </label>
+                          <input
+                            type="text"
+                            name="shippingCountry"
+                            id="shippingCountry"
+                            required
+                            value={formData.shippingCountry}
+                            onChange={handleChange}
+                            className="mt-2 block w-full rounded-md border-0 py-1.5 bg-gray-700 text-white shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm sm:leading-6"
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {/* Password */}
+                    <div className="sm:col-span-2">
+                      <h3 className="text-lg font-semibold text-white mb-4 mt-4">Account Security</h3>
+                    </div>
+
+                    <div>
+                      <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+                        Password *
+                      </label>
+                      <input
+                        type="password"
+                        name="password"
+                        id="password"
+                        required
+                        value={formData.password}
+                        onChange={handleChange}
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 bg-gray-700 text-white shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm sm:leading-6"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300">
+                        Confirm Password *
+                      </label>
+                      <input
+                        type="password"
+                        name="confirmPassword"
+                        id="confirmPassword"
+                        required
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
                         className="mt-2 block w-full rounded-md border-0 py-1.5 bg-gray-700 text-white shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm sm:leading-6"
                       />
                     </div>
@@ -291,7 +494,10 @@ export default function SignUpModal({ isOpen, onClose, onSignInClick }) {
 
                   <div className="mt-6">
                     <button
-                      onClick={onSignInClick}
+                      onClick={() => {
+                        onClose();
+                        onSignInClick();
+                      }}
                       className="flex w-full justify-center rounded-md bg-gray-700 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600"
                     >
                       Sign in
