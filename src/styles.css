@@ -30,3 +30,40 @@ input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 30px transparent inset !important;
   -webkit-text-fill-color: #e5e7eb !important;
 }
+
+@media (max-width: 1024px) {
+  .rdt_Table {
+    min-width: 800px;
+  }
+
+  .rdt_TableWrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+}
+
+.bg-gray-800 {
+  overflow-x: auto;
+}
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  min-width: 100%;
+  overflow-x: hidden;
+}
+
+@media (max-width: 640px) {
+  .p-2 {
+    padding: 0.5rem !important;
+  }
+
+  .p-3 {
+    padding: 0.75rem !important;
+  }
+}

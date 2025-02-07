@@ -373,11 +373,20 @@ const ListingProducts = () => {
     }, [filterText, resetPaginationToggle])
 
     const customStyles = {
+        tableWrapper: {
+            style: {
+                display: 'block',
+                width: '100%',
+                overflowX: 'auto',
+                WebkitOverflowScrolling: 'touch',
+            },
+        },
         table: {
             style: {
                 backgroundColor: "#1f2937",
                 color: "#e5e7eb",
-                width: "100%",
+                minWidth: '800px',
+                width: '100%',
             },
         },
         rows: {
@@ -437,8 +446,8 @@ const ListingProducts = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-900">
-            <header className="h-16 bg-gray-800 border-b border-gray-700 px-4 flex items-center justify-between">
+        <div className="min-h-screen bg-gray-900 w-full overflow-x-hidden">
+            <header className="h-16 bg-gray-800 border-b border-gray-700 px-4 flex items-center justify-between sticky top-0 z-10">
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -451,9 +460,16 @@ const ListingProducts = () => {
             </header>
             <div className="flex">
                 <Sidebar isOpen={isSidebarOpen} />
-                <main className="flex-1 p-2 sm:p-6">
-                    <div className="max-w-7xl mx-auto bg-gray-800 rounded-lg shadow-md p-3 sm:p-6">
+                <main className="flex-1 p-2 sm:p-6 min-w-0">
+                    <div className="max-w-7xl mx-auto bg-gray-800 rounded-lg shadow-md p-3 sm:p-6 overflow-hidden">
                         <h2 className="text-xl sm:text-2xl font-semibold text-gray-200 mb-6">Products List</h2>
+
+                        {error && (
+                            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded-lg">
+                                <p className="text-red-400 text-sm">{error}</p>
+                            </div>
+                        )}
+
                         <div className="overflow-hidden">
                             <DataTable
                                 columns={columns}

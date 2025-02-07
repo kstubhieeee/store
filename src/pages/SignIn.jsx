@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 const DEMO_CREDENTIALS = {
-  email: 'test@example.com',
-  password: 'password123'
+  email: 'e@e.com',
+  password: '123456'
 };
 
 function SignIn() {
@@ -47,7 +47,7 @@ function SignIn() {
       }
     } catch (error) {
       setError(error.message);
-      setTimeout(() => setError(""), 3000); 
+      setTimeout(() => setError(""), 3000);
     }
   };
 
@@ -60,7 +60,12 @@ function SignIn() {
             {error}
           </div>
         )}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-6"
+          aria-label="login-form"
+          role="form"
+        >
           <div>
             <input
               type="text"
