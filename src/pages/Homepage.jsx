@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchProducts } from '../store/productsSlice';
-import { Link } from 'react-router-dom';
+import SignInModal from '../components/SignInModal';
+import SignUpModal from '../components/SignUpModal';
 
 const Homepage = () => {
     const dispatch = useDispatch();
     const products = useSelector((state) => state.products.items);
     const status = useSelector((state) => state.products.status);
     const [displayCount, setDisplayCount] = useState(6);
+    const [isSignInOpen, setIsSignInOpen] = useState(false);
+    const [isSignUpOpen, setIsSignUpOpen] = useState(false);
 
     useEffect(() => {
         if (status === 'idle') {
@@ -17,6 +20,16 @@ const Homepage = () => {
 
     const handleViewMore = () => {
         setDisplayCount(prevCount => prevCount + 6);
+    };
+
+    const handleSignInClick = () => {
+        setIsSignInOpen(true);
+        setIsSignUpOpen(false);
+    };
+
+    const handleSignUpClick = () => {
+        setIsSignUpOpen(true);
+        setIsSignInOpen(false);
     };
 
     if (status === 'loading') {
@@ -47,12 +60,12 @@ const Homepage = () => {
                             </nav>
                         </div>
                         <div className="flex gap-4">
-                            <Link
-                                to="/signin"
+                            <button
+                                onClick={handleSignInClick}
                                 className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                             >
                                 Sign In
-                            </Link>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -155,7 +168,7 @@ const Homepage = () => {
                                 <li className="flex items-center">
                                     <i className='bx bx-phone mr-2'></i>
                                     (555) 123-4567
-                                </li>
+                                </li> 
                                 <li className="flex items-center">
                                     <i className='bx bx-envelope mr-2'></i>
                                     info@techmart.com
@@ -177,6 +190,18 @@ const Homepage = () => {
                     </div>
                 </div>
             </footer>
+
+            <SignInModal
+                isOpen={isSignInOpen}
+                onClose={() => setIsSignInOpen(false)}
+                onSignUpClick={handleSignUpClick}
+            />
+
+            <SignUpModal
+                isOpen={isSignUpOpen}
+                onClose={() => setIsSignUpOpen(false)}
+                onSignInClick={handleSignInClick}
+            />
         </div>
     );
 };
