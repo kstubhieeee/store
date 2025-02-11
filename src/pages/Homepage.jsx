@@ -4,6 +4,7 @@ import { fetchProducts } from '../store/productsSlice';
 import SignInModal from '../components/SignInModal';
 import SignUpModal from '../components/SignUpModal';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 
 const Homepage = () => {
     const dispatch = useDispatch();
@@ -29,9 +30,35 @@ const Homepage = () => {
     const handleSignOut = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        localStorage.removeItem('role'); 
+        localStorage.removeItem('role');
+        localStorage.removeItem('cart'); // Clear cart on sign out
         setUser(null);
-        window.location.reload(); 
+        window.location.reload();
+    };
+
+    const handleAddToCart = (product) => {
+        if (!user) {
+            setIsSignInOpen(true);
+            return;
+        }
+
+        if (user.isAdmin) {
+            toast.error("Admins cannot add items to cart");
+            return;
+        }
+
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        const existingItem = cart.find(item => item._id === product._id);
+
+        if (existingItem) {
+            existingItem.cartQuantity += 1;
+            toast.success(`Added another ${product.name} to cart`);
+        } else {
+            cart.push({ ...product, cartQuantity: 1 });
+            toast.success(`${product.name} added to cart`);
+        }
+
+        localStorage.setItem('cart', JSON.stringify(cart));
     };
 
     const handleViewMore = () => {
@@ -78,10 +105,18 @@ const Homepage = () => {
                         <div className="flex items-center gap-4">
                             {user ? (
                                 <div className="flex items-center gap-4">
+                                    {!user.isAdmin && (
+                                        <Link
+                                            to="/cart"
+                                            className="p-2 text-gray-300 hover:text-white transition-colors"
+                                        >
+                                            <i className='bx bx-cart text-2xl'></i>
+                                        </Link>
+                                    )}
                                     <div className="flex items-center gap-2">
                                         <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
                                             <span className="text-white font-medium">
-                                                {user.firstName.charAt(0)}
+                                                {user.firstName?.charAt(0)}
                                             </span>
                                         </div>
                                         <span className="text-white">
@@ -153,7 +188,10 @@ const Homepage = () => {
                                     <span className="text-sm text-gray-300">
                                         {product.quantity} in stock
                                     </span>
-                                    <button className="px-4 py-2 ml-5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                    <button
+                                        className="px-4 py-2 ml-5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                        onClick={() => handleAddToCart(product)}
+                                    >
                                         Add to Cart
                                     </button>
                                 </div>
@@ -198,7 +236,7 @@ const Homepage = () => {
                             <ul className="space-y-2 text-gray-400 flex flex-col items-center md:items-start">
                                 <li className="flex items-center">
                                     <i className='bx bx-map mr-2'></i>
-                                    <a href="https://www.google.com/maps/place/Tech+Hub/@19.2219867,72.8528759,20.49z/data=!4m10!1m2!2m1!1sTech+Store+Near+City!3m6!1s0x3be7b124b867b72b:0x995b415640967bbe!8m2!3d19.2220172!4d72.8531423!15sChRUZWNoIFN0b3JlIE5lYXIgQ2l0eVoWIhR0ZWNoIHN0b3JlIG5lYXIgY2l0eZIBDmNvbXB1dGVyX3N0b3Jl4AEA!16s%2Fg%2F11v5djr1_k?entry=ttu&g_ep=EgoyMDI1MDIwNC4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                                    <a href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
                                         123 Tech Street, Digital City, 12345
                                     </a>
                                 </li>
