@@ -29,9 +29,9 @@ const Homepage = () => {
     const handleSignOut = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        localStorage.removeItem('role'); // Clear the role
+        localStorage.removeItem('role'); 
         setUser(null);
-        window.location.reload(); // Reload to ensure all state is cleared
+        window.location.reload(); 
     };
 
     const handleViewMore = () => {
@@ -205,7 +205,7 @@ const Homepage = () => {
                                 <li className="flex items-center">
                                     <i className='bx bx-phone mr-2'></i>
                                     (555) 123-4567
-                                </li> 
+                                </li>
                                 <li className="flex items-center">
                                     <i className='bx bx-envelope mr-2'></i>
                                     info@techmart.com
