@@ -7,6 +7,7 @@ import 'boxicons/css/boxicons.min.css';
 import './styles.css';
 import AddProducts from "./pages/AddProducts";
 import ListingProducts from "./pages/ListingProducts";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
@@ -15,9 +16,30 @@ function App() {
         <Route path="/" element={<Homepage />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/add" element={<AddProducts />} />
-        <Route path="/listing" element={<ListingProducts />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute adminRequired={true}>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/add"
+          element={
+            <ProtectedRoute adminRequired={true}>
+              <AddProducts />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/listing"
+          element={
+            <ProtectedRoute adminRequired={true}>
+              <ListingProducts />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

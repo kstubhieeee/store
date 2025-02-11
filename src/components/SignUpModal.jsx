@@ -38,31 +38,13 @@ export default function SignUpModal({ isOpen, onClose, onSignInClick }) {
       return;
     }
 
-    // Phone number validation
-    const phoneRegex = /^\d{10}$/;
-    if (!phoneRegex.test(formData.phone)) {
-      setError("Please enter a valid 10-digit phone number");
-      return;
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      setError("Please enter a valid email address");
-      return;
-    }
-
-    // Zip code validation
-    const zipRegex = /^\d{5}(-\d{4})?$/;
-    if (!zipRegex.test(formData.zipCode)) {
-      setError("Please enter a valid ZIP code");
-      return;
-    }
-
     try {
-      const response = await axios.post('http://localhost:5000/api/signup', formData);
+      const response = await axios.post('http://localhost:5000/api/signup', {
+        ...formData,
+        isAdmin: false // Ensure users signing up through modal are not admins
+      });
       localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      localStorage.setItem('user', JSON.stringify({ ...response.data.user, isAdmin: false }));
       window.location.reload();
     } catch (error) {
       setError(error.response?.data?.message || 'Error creating account');

@@ -8,7 +8,11 @@ function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('role'); 
     navigate('/');
+    window.location.reload(); 
   };
 
   return (
@@ -41,4 +45,4 @@ function Dashboard() {
   );
 }
 
-export default Dashboard
+export default Dashboard;

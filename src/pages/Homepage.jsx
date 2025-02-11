@@ -29,7 +29,9 @@ const Homepage = () => {
     const handleSignOut = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        localStorage.removeItem('role'); // Clear the role
         setUser(null);
+        window.location.reload(); // Reload to ensure all state is cleared
     };
 
     const handleViewMore = () => {
@@ -175,16 +177,16 @@ const Homepage = () => {
             <footer className="bg-gray-800 border-t border-gray-700">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                        <div>
-                            <div className="flex items-center">
+                        <div className="text-center md:text-left">
+                            <div className="flex items-center justify-center md:justify-start">
                                 <i className='bx bxs-store text-3xl text-blue-500'></i>
                                 <span className="ml-2 text-xl font-bold text-white">TechMart</span>
                             </div>
                             <p className="mt-4 text-gray-400">Your one-stop shop for all things tech. Quality products, competitive prices, and excellent service.</p>
                         </div>
                         <div>
-                            <h3 className="text-white font-semibold mb-4">Quick Links</h3>
-                            <ul className="space-y-2">
+                            <h3 className="text-white font-semibold mb-4 text-center md:text-left">Quick Links</h3>
+                            <ul className="space-y-2 flex flex-col items-center md:items-start">
                                 <li><a href="#" className="text-gray-400 hover:text-white transition-colors">About Us</a></li>
                                 <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Contact</a></li>
                                 <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Blog</a></li>
@@ -192,8 +194,8 @@ const Homepage = () => {
                             </ul>
                         </div>
                         <div>
-                            <h3 className="text-white font-semibold mb-4">Contact Info</h3>
-                            <ul className="space-y-2 text-gray-400">
+                            <h3 className="text-white font-semibold mb-4 text-center md:text-left">Contact Info</h3>
+                            <ul className="space-y-2 text-gray-400 flex flex-col items-center md:items-start">
                                 <li className="flex items-center">
                                     <i className='bx bx-map mr-2'></i>
                                     <a href="https://www.google.com/maps/place/Tech+Hub/@19.2219867,72.8528759,20.49z/data=!4m10!1m2!2m1!1sTech+Store+Near+City!3m6!1s0x3be7b124b867b72b:0x995b415640967bbe!8m2!3d19.2220172!4d72.8531423!15sChRUZWNoIFN0b3JlIE5lYXIgQ2l0eVoWIhR0ZWNoIHN0b3JlIG5lYXIgY2l0eZIBDmNvbXB1dGVyX3N0b3Jl4AEA!16s%2Fg%2F11v5djr1_k?entry=ttu&g_ep=EgoyMDI1MDIwNC4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
@@ -211,8 +213,8 @@ const Homepage = () => {
                             </ul>
                         </div>
                         <div>
-                            <h3 className="text-white font-semibold mb-4">Legal</h3>
-                            <ul className="space-y-2">
+                            <h3 className="text-white font-semibold mb-4 text-center md:text-left">Legal</h3>
+                            <ul className="space-y-2 flex flex-col items-center md:items-start">
                                 <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</a></li>
                                 <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Terms of Service</a></li>
                                 <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Return Policy</a></li>

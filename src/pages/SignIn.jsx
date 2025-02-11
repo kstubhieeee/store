@@ -22,10 +22,10 @@ function SignIn() {
     setError("");
 
     try {
-      const response = await axios.post('http://localhost:5000/api/signin', formData);
+      const response = await axios.post('http://localhost:5000/api/admin/signin', formData);
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
-      navigate('/');
+      navigate('/dashboard');
     } catch (error) {
       setError(error.response?.data?.message || 'Error signing in');
       setTimeout(() => setError(""), 3000);
@@ -35,7 +35,7 @@ function SignIn() {
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
       <div className="max-w-md w-full bg-gray-800 rounded-lg shadow-xl p-8">
-        <h2 className="text-3xl font-bold text-center text-white mb-8">Sign In</h2>
+        <h2 className="text-3xl font-bold text-center text-white mb-8">Admin Sign In</h2>
         {error && (
           <div className="mb-6 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
             {error}
@@ -66,20 +66,16 @@ function SignIn() {
             />
           </div>
 
-          <div className="text-right">
-            <a href="#" className="text-sm text-blue-400 hover:text-blue-300">Forgot password?</a>
-          </div>
-
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-300"
           >
-            Sign In
+            Sign In as Admin
           </button>
         </form>
 
         <div className="mt-6 text-center">
-          <span className="text-gray-400">Don't have an account? </span>
+          <span className="text-gray-400">Don't have an admin account? </span>
           <Link to="/signup" className="text-blue-400 hover:text-blue-300">Sign up</Link>
         </div>
       </div>
@@ -87,4 +83,4 @@ function SignIn() {
   );
 }
 
-export default SignIn;
+export default SignIn
