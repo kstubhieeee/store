@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import ReCAPTCHA from "react-google-recaptcha";
 
 function SignIn() {
   const navigate = useNavigate();
@@ -9,6 +10,10 @@ function SignIn() {
     email: '',
     password: ''
   });
+
+  function onChange(value) {
+  console.log("Captcha value:", value);
+}
 
   const handleChange = (e) => {
     setFormData({
@@ -21,6 +26,8 @@ function SignIn() {
     e.preventDefault();
     setError("");
 
+
+    
     try {
       const response = await axios.post('http://localhost:5000/api/admin/signin', formData);
       localStorage.setItem('token', response.data.token);
@@ -65,7 +72,10 @@ function SignIn() {
               required
             />
           </div>
-
+<ReCAPTCHA
+    sitekey="6Le3p9MqAAAAADvETca9CsDc2qlZnE8dh0Izj-MA"
+    onChange={onChange}
+  />
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-300"
