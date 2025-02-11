@@ -11,10 +11,10 @@ function SignIn() {
   });
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       [e.target.name]: e.target.value
-    });
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -25,7 +25,7 @@ function SignIn() {
       const response = await axios.post('http://localhost:5000/api/admin/signin', formData);
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
-      navigate('/dashboard');
+      navigate('/admin/dashboard');
     } catch (error) {
       setError(error.response?.data?.message || 'Error signing in');
       setTimeout(() => setError(""), 3000);
@@ -76,11 +76,11 @@ function SignIn() {
 
         <div className="mt-6 text-center">
           <span className="text-gray-400">Don't have an admin account? </span>
-          <Link to="/signup" className="text-blue-400 hover:text-blue-300">Sign up</Link>
+          <Link to="/admin/signup" className="text-blue-400 hover:text-blue-300">Sign up</Link>
         </div>
       </div>
     </div>
   );
 }
 
-export default SignIn
+export default SignIn;

@@ -39,8 +39,8 @@ function App() {
       />
       <Routes>
         <Route path="/" element={<Homepage />} />
-        <Route path="/signin" element={<SignIn />} />
-        <Route path="/signup" element={<SignUp />} />
+        <Route path="/admin/signin" element={<SignIn />} />
+        <Route path="/admin/signup" element={<SignUp />} />
         <Route
           path="/cart"
           element={
@@ -50,7 +50,7 @@ function App() {
           }
         />
         <Route
-          path="/dashboard"
+          path="/admin/dashboard"
           element={
             <ProtectedRoute adminRequired={true}>
               <Dashboard />
@@ -58,7 +58,7 @@ function App() {
           }
         />
         <Route
-          path="/add"
+          path="/admin/product/add"
           element={
             <ProtectedRoute adminRequired={true}>
               <AddProducts />
@@ -66,7 +66,7 @@ function App() {
           }
         />
         <Route
-          path="/listing"
+          path="/admin/product/listing"
           element={
             <ProtectedRoute adminRequired={true}>
               <ListingProducts />

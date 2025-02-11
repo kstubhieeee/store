@@ -35,7 +35,7 @@ function SignUp() {
 
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
-      navigate('/dashboard');
+      navigate('/admin/dashboard');
     } catch (error) {
       setError(error.response?.data?.message || 'Error creating account');
       setTimeout(() => setError(''), 3000);
@@ -98,7 +98,7 @@ function SignUp() {
 
         <div className="mt-6 text-center">
           <span className="text-gray-400">Already have an admin account? </span>
-          <Link to="/signin" className="text-blue-400 hover:text-blue-300">Sign in</Link>
+          <Link to="/admin/signin" className="text-blue-400 hover:text-blue-300">Sign in</Link>
         </div>
       </div>
     </div>
