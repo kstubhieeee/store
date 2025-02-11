@@ -39,12 +39,16 @@ export default function SignUpModal({ isOpen, onClose, onSignInClick }) {
     }
 
     try {
+      // Get reCAPTCHA token
+      const token = await window.grecaptcha.execute('6LfhjNMqAAAAAGDDBrgB9nBG0hR1-gcMrWsF4Gzn', { action: 'signup' });
+
       const response = await axios.post('http://localhost:5000/api/signup', {
         ...formData,
-        isAdmin: false // Ensure users signing up through modal are not admins
+        recaptchaToken: token
       });
+
       localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify({ ...response.data.user, isAdmin: false }));
+      localStorage.setItem('user', JSON.stringify(response.data.user));
       window.location.reload();
     } catch (error) {
       setError(error.response?.data?.message || 'Error creating account');

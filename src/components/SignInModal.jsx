@@ -15,10 +15,17 @@ export default function SignInModal({ isOpen, onClose, onSignUpClick }) {
     setError("");
 
     try {
-      const response = await axios.post('http://localhost:5000/api/signin', formData);
+      // Get reCAPTCHA token
+      const token = await window.grecaptcha.execute('6LfhjNMqAAAAAGDDBrgB9nBG0hR1-gcMrWsF4Gzn', { action: 'signin' });
+
+      const response = await axios.post('http://localhost:5000/api/signin', {
+        ...formData,
+        recaptchaToken: token
+      });
+      
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
-      window.location.reload(); // Reload to update the UI with user data
+      window.location.reload();
     } catch (error) {
       setError(error.response?.data?.message || 'Error signing in');
       setTimeout(() => setError(""), 3000);

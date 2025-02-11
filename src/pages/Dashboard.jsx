@@ -10,9 +10,9 @@ function Dashboard() {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    localStorage.removeItem('role'); 
+    localStorage.removeItem('role'); // Clear the role
     navigate('/');
-    window.location.reload(); 
+    window.location.reload(); // Reload to ensure all state is cleared
   };
 
   return (
