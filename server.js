@@ -18,12 +18,10 @@ app.use(cors());
 app.use(express.json());
 app.use("/images", express.static("public/images/store"));
 
-
 const uploadDir = "public/images/store";
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
-
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -38,7 +36,7 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024, 
+    fileSize: 5 * 1024 * 1024,
   },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith("image/")) {
@@ -49,11 +47,10 @@ const upload = multer({
   },
 });
 
-const uri = "mongodb:
+const uri = "mongodb://localhost:27017";
 const client = new MongoClient(uri);
 
 let db;
-
 
 async function createAdminCollection() {
   try {
@@ -61,7 +58,6 @@ async function createAdminCollection() {
     console.log("Admins collection created");
   } catch (error) {
     if (error.code !== 48) {
-      
       console.error("Error creating admins collection:", error);
     }
   }
@@ -81,22 +77,18 @@ connectToDb().then(() => {
   createAdminCollection();
 });
 
-
 app.post("/api/admin/signup", async (req, res) => {
   try {
     const { email, password, firstName, lastName } = req.body;
 
-    
     const existingAdmin = await db.collection("admins").findOne({ email });
     if (existingAdmin) {
       return res.status(400).json({ message: "Admin already exists" });
     }
 
-    
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    
     const admin = {
       email,
       password: hashedPassword,
@@ -107,14 +99,12 @@ app.post("/api/admin/signup", async (req, res) => {
 
     const result = await db.collection("admins").insertOne(admin);
 
-    
     const token = jwt.sign(
       { userId: result.insertedId, email, firstName, lastName, isAdmin: true },
       JWT_SECRET,
       { expiresIn: "24h" }
     );
 
-    
     delete admin.password;
 
     res.status(201).json({
@@ -135,19 +125,16 @@ app.post("/api/admin/signin", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    
     const admin = await db.collection("admins").findOne({ email });
     if (!admin) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    
     const isValidPassword = await bcrypt.compare(password, admin.password);
     if (!isValidPassword) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    
     const token = jwt.sign(
       {
         userId: admin._id,
@@ -160,7 +147,6 @@ app.post("/api/admin/signin", async (req, res) => {
       { expiresIn: "24h" }
     );
 
-    
     delete admin.password;
 
     res.json({
@@ -175,7 +161,6 @@ app.post("/api/admin/signin", async (req, res) => {
     res.status(500).json({ message: "Error signing in" });
   }
 });
-
 
 app.post("/api/signup", async (req, res) => {
   try {
@@ -202,17 +187,14 @@ app.post("/api/signup", async (req, res) => {
       useShippingForBilling,
     } = req.body;
 
-    
     const existingUser = await db.collection("users").findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    
     const user = {
       email,
       password: hashedPassword,
@@ -238,14 +220,12 @@ app.post("/api/signup", async (req, res) => {
 
     const result = await db.collection("users").insertOne(user);
 
-    
     const token = jwt.sign(
       { userId: result.insertedId, email, firstName, lastName },
       JWT_SECRET,
       { expiresIn: "24h" }
     );
 
-    
     delete user.password;
 
     res.status(201).json({
@@ -265,19 +245,16 @@ app.post("/api/signin", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    
     const user = await db.collection("users").findOne({ email });
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    
     const token = jwt.sign(
       {
         userId: user._id,
@@ -289,7 +266,6 @@ app.post("/api/signin", async (req, res) => {
       { expiresIn: "24h" }
     );
 
-    
     delete user.password;
 
     res.json({
@@ -301,7 +277,6 @@ app.post("/api/signin", async (req, res) => {
     res.status(500).json({ message: "Error signing in" });
   }
 });
-
 
 app.get("/api/products", async (req, res) => {
   try {
@@ -344,7 +319,6 @@ app.put("/api/products/:id", upload.single("image"), async (req, res) => {
     if (req.file) {
       updates.imagePath = `/images/${req.file.filename}`;
 
-      
       const oldProduct = await db
         .collection("products")
         .findOne({ _id: new ObjectId(id) });
@@ -360,7 +334,6 @@ app.put("/api/products/:id", upload.single("image"), async (req, res) => {
       return res.status(400).json({ message: "Invalid product ID" });
     }
 
-    
     if (updates.price) updates.price = Number(updates.price);
     if (updates.discount) updates.discount = Number(updates.discount);
     if (updates.quantity) updates.quantity = Number(updates.quantity);
