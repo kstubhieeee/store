@@ -11,6 +11,10 @@ import AddProducts from "./pages/AddProducts";
 import ListingProducts from "./pages/ListingProducts";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProtectedCustomerRoute from "./components/ProtectedCustomerRoute";
+import MerchantRegistration from "./pages/merchant/MerchantRegistration";
+import MerchantLogin from "./pages/merchant/MerchantLogin";
+import MerchantDashboard from "./pages/merchant/MerchantDashboard";
+import ProtectedMerchantRoute from "./components/ProtectedMerchantRoute";
 
 function App() {
   return (
@@ -41,6 +45,16 @@ function App() {
         <Route path="/" element={<Homepage />} />
         <Route path="/admin/signin" element={<SignIn />} />
         <Route path="/admin/signup" element={<SignUp />} />
+        <Route path="/merchant/registration" element={<MerchantRegistration />} />
+        <Route path="/merchant/login" element={<MerchantLogin />} />
+        <Route
+          path="/merchant/dashboard"
+          element={
+            <ProtectedMerchantRoute>
+              <MerchantDashboard />
+            </ProtectedMerchantRoute>
+          }
+        />
         <Route
           path="/cart"
           element={

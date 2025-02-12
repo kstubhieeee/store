@@ -7,20 +7,20 @@ import path from "path";
 import fs from "fs";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import axios from 'axios';
+import axios from "axios";
 
 dotenv.config();
 
 const app = express();
 const port = 5000;
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
 app.use(cors());
 app.use(express.json());
-app.use('/images', express.static('public/images/store'));
+app.use("/images", express.static("public/images/store"));
 
 // Create the upload directory if it doesn't exist
-const uploadDir = 'public/images/store';
+const uploadDir = "public/images/store";
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -28,26 +28,26 @@ if (!fs.existsSync(uploadDir)) {
 // Configure multer for image upload
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'public/images/store/');
+    cb(null, "public/images/store/");
   },
   filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
+  },
 });
 
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
+    fileSize: 5 * 1024 * 1024, // 5MB limit
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    if (file.mimetype.startsWith("image/")) {
       cb(null, true);
     } else {
-      cb(new Error('Not an image! Please upload an image.'), false);
+      cb(new Error("Not an image! Please upload an image."), false);
     }
-  }
+  },
 });
 
 const uri = "mongodb://localhost:27017";
@@ -61,7 +61,8 @@ async function createAdminCollection() {
     await db.createCollection("admins");
     console.log("Admins collection created");
   } catch (error) {
-    if (error.code !== 48) { // 48 is the error code for "collection already exists"
+    if (error.code !== 48) {
+      // 48 is the error code for "collection already exists"
       console.error("Error creating admins collection:", error);
     }
   }
@@ -80,16 +81,20 @@ async function connectToDb() {
 // Add the reCAPTCHA verification function
 async function verifyRecaptcha(token) {
   try {
-    const response = await axios.post('https://www.google.com/recaptcha/api/siteverify', null, {
-      params: {
-        secret: '6LfhjNMqAAAAAKlSRaIuGXcuw2nZ2MHOUoqWwzXr',
-        response: token
+    const response = await axios.post(
+      "https://www.google.com/recaptcha/api/siteverify",
+      null,
+      {
+        params: {
+          secret: "6LfhjNMqAAAAAKlSRaIuGXcuw2nZ2MHOUoqWwzXr",
+          response: token,
+        },
       }
-    });
+    );
 
     return response.data.success && response.data.score >= 0.5;
   } catch (error) {
-    console.error('reCAPTCHA verification error:', error);
+    console.error("reCAPTCHA verification error:", error);
     return false;
   }
 }
@@ -101,12 +106,7 @@ connectToDb().then(() => {
 // Admin Authentication Routes
 app.post("/api/admin/signup", async (req, res) => {
   try {
-    const {
-      email,
-      password,
-      firstName,
-      lastName
-    } = req.body;
+    const { email, password, firstName, lastName } = req.body;
 
     // Check if admin already exists
     const existingAdmin = await db.collection("admins").findOne({ email });
@@ -124,16 +124,16 @@ app.post("/api/admin/signup", async (req, res) => {
       password: hashedPassword,
       firstName,
       lastName,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
     const result = await db.collection("admins").insertOne(admin);
-    
+
     // Create JWT token
     const token = jwt.sign(
       { userId: result.insertedId, email, firstName, lastName, isAdmin: true },
       JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: "24h" }
     );
 
     // Remove password from admin object before sending response
@@ -144,8 +144,8 @@ app.post("/api/admin/signup", async (req, res) => {
       user: {
         id: result.insertedId,
         ...admin,
-        isAdmin: true
-      }
+        isAdmin: true,
+      },
     });
   } catch (error) {
     console.error("Admin signup error:", error);
@@ -171,9 +171,15 @@ app.post("/api/admin/signin", async (req, res) => {
 
     // Create JWT token
     const token = jwt.sign(
-      { userId: admin._id, email: admin.email, firstName: admin.firstName, lastName: admin.lastName, isAdmin: true },
+      {
+        userId: admin._id,
+        email: admin.email,
+        firstName: admin.firstName,
+        lastName: admin.lastName,
+        isAdmin: true,
+      },
       JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: "24h" }
     );
 
     // Remove password from admin object before sending response
@@ -183,8 +189,8 @@ app.post("/api/admin/signin", async (req, res) => {
       token,
       user: {
         ...admin,
-        isAdmin: true
-      }
+        isAdmin: true,
+      },
     });
   } catch (error) {
     console.error("Admin signin error:", error);
@@ -204,7 +210,9 @@ app.post("/api/signup", async (req, res) => {
     }
 
     // Rest of the sign-up logic remains the same
-    const existingUser = await db.collection("users").findOne({ email: userData.email });
+    const existingUser = await db
+      .collection("users")
+      .findOne({ email: userData.email });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
@@ -215,15 +223,20 @@ app.post("/api/signup", async (req, res) => {
     const user = {
       ...userData,
       password: hashedPassword,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
     const result = await db.collection("users").insertOne(user);
-    
+
     const token = jwt.sign(
-      { userId: result.insertedId, email: userData.email, firstName: userData.firstName, lastName: userData.lastName },
+      {
+        userId: result.insertedId,
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+      },
       JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: "24h" }
     );
 
     delete user.password;
@@ -232,8 +245,8 @@ app.post("/api/signup", async (req, res) => {
       token,
       user: {
         id: result.insertedId,
-        ...user
-      }
+        ...user,
+      },
     });
   } catch (error) {
     console.error("Signup error:", error);
@@ -265,9 +278,14 @@ app.post("/api/signin", async (req, res) => {
 
     // Create JWT token
     const token = jwt.sign(
-      { userId: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName },
+      {
+        userId: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
       JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: "24h" }
     );
 
     // Remove password from user object before sending response
@@ -275,7 +293,7 @@ app.post("/api/signin", async (req, res) => {
 
     res.json({
       token,
-      user
+      user,
     });
   } catch (error) {
     console.error("Signin error:", error);
@@ -294,7 +312,7 @@ app.get("/api/products", async (req, res) => {
   }
 });
 
-app.post("/api/products", upload.single('image'), async (req, res) => {
+app.post("/api/products", upload.single("image"), async (req, res) => {
   try {
     const { name, price, discount, description, quantity } = req.body;
     const imagePath = req.file ? `/images/${req.file.filename}` : null;
@@ -305,7 +323,7 @@ app.post("/api/products", upload.single('image'), async (req, res) => {
       discount: Number(discount),
       description,
       quantity: Number(quantity),
-      imagePath
+      imagePath,
     };
 
     const result = await db.collection("products").insertOne(product);
@@ -317,7 +335,7 @@ app.post("/api/products", upload.single('image'), async (req, res) => {
   }
 });
 
-app.put("/api/products/:id", upload.single('image'), async (req, res) => {
+app.put("/api/products/:id", upload.single("image"), async (req, res) => {
   try {
     const { id } = req.params;
     const updates = { ...req.body };
@@ -326,9 +344,11 @@ app.put("/api/products/:id", upload.single('image'), async (req, res) => {
       updates.imagePath = `/images/${req.file.filename}`;
 
       // Delete old image if it exists
-      const oldProduct = await db.collection("products").findOne({ _id: new ObjectId(id) });
+      const oldProduct = await db
+        .collection("products")
+        .findOne({ _id: new ObjectId(id) });
       if (oldProduct?.imagePath) {
-        const oldImagePath = path.join('public', oldProduct.imagePath);
+        const oldImagePath = path.join("public", oldProduct.imagePath);
         if (fs.existsSync(oldImagePath)) {
           fs.unlinkSync(oldImagePath);
         }
@@ -372,9 +392,11 @@ app.delete("/api/products/:id", async (req, res) => {
     }
 
     // Get the product to delete its image
-    const product = await db.collection("products").findOne({ _id: new ObjectId(id) });
+    const product = await db
+      .collection("products")
+      .findOne({ _id: new ObjectId(id) });
     if (product?.imagePath) {
-      const imagePath = path.join('public', product.imagePath);
+      const imagePath = path.join("public", product.imagePath);
       if (fs.existsSync(imagePath)) {
         fs.unlinkSync(imagePath);
       }
@@ -399,38 +421,38 @@ app.delete("/api/products/:id", async (req, res) => {
 app.post("/api/cart", async (req, res) => {
   try {
     const { userId, productId, quantity } = req.body;
-    
+
     // Check if cart exists for user
     let cart = await db.collection("carts").findOne({ userId });
-    
+
     if (cart) {
       // Check if product exists in cart
-      const existingProduct = cart.items.find(item => 
-        item.productId.toString() === productId
+      const existingProduct = cart.items.find(
+        (item) => item.productId.toString() === productId
       );
 
       if (existingProduct) {
         // Update quantity if product exists
         await db.collection("carts").updateOne(
-          { 
-            userId, 
-            "items.productId": new ObjectId(productId) 
+          {
+            userId,
+            "items.productId": new ObjectId(productId),
           },
-          { 
-            $inc: { "items.$.quantity": quantity } 
+          {
+            $inc: { "items.$.quantity": quantity },
           }
         );
       } else {
         // Add new product to cart
         await db.collection("carts").updateOne(
           { userId },
-          { 
-            $push: { 
-              items: { 
-                productId: new ObjectId(productId), 
-                quantity 
-              } 
-            } 
+          {
+            $push: {
+              items: {
+                productId: new ObjectId(productId),
+                quantity,
+              },
+            },
           }
         );
       }
@@ -438,11 +460,13 @@ app.post("/api/cart", async (req, res) => {
       // Create new cart
       await db.collection("carts").insertOne({
         userId,
-        items: [{
-          productId: new ObjectId(productId),
-          quantity
-        }],
-        createdAt: new Date()
+        items: [
+          {
+            productId: new ObjectId(productId),
+            quantity,
+          },
+        ],
+        createdAt: new Date(),
       });
     }
 
@@ -456,27 +480,28 @@ app.post("/api/cart", async (req, res) => {
 app.get("/api/cart/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     const cart = await db.collection("carts").findOne({ userId });
-    
+
     if (!cart) {
       return res.json({ items: [] });
     }
 
     // Get product details for each item in cart
-    const productIds = cart.items.map(item => new ObjectId(item.productId));
-    const products = await db.collection("products")
+    const productIds = cart.items.map((item) => new ObjectId(item.productId));
+    const products = await db
+      .collection("products")
       .find({ _id: { $in: productIds } })
       .toArray();
 
     // Combine product details with cart quantities
-    const cartItems = cart.items.map(cartItem => {
-      const product = products.find(p => 
-        p._id.toString() === cartItem.productId.toString()
+    const cartItems = cart.items.map((cartItem) => {
+      const product = products.find(
+        (p) => p._id.toString() === cartItem.productId.toString()
       );
       return {
         ...product,
-        cartQuantity: cartItem.quantity
+        cartQuantity: cartItem.quantity,
       };
     });
 
@@ -490,13 +515,13 @@ app.get("/api/cart/:userId", async (req, res) => {
 app.delete("/api/cart/:userId/:productId", async (req, res) => {
   try {
     const { userId, productId } = req.params;
-    
+
     await db.collection("carts").updateOne(
       { userId },
-      { 
-        $pull: { 
-          items: { productId: new ObjectId(productId) } 
-        } 
+      {
+        $pull: {
+          items: { productId: new ObjectId(productId) },
+        },
       }
     );
 
@@ -511,14 +536,14 @@ app.put("/api/cart/:userId/:productId", async (req, res) => {
   try {
     const { userId, productId } = req.params;
     const { quantity } = req.body;
-    
+
     await db.collection("carts").updateOne(
-      { 
-        userId, 
-        "items.productId": new ObjectId(productId) 
+      {
+        userId,
+        "items.productId": new ObjectId(productId),
       },
-      { 
-        $set: { "items.$.quantity": quantity } 
+      {
+        $set: { "items.$.quantity": quantity },
       }
     );
 
@@ -526,6 +551,118 @@ app.put("/api/cart/:userId/:productId", async (req, res) => {
   } catch (error) {
     console.error("Error updating cart quantity:", error);
     res.status(500).json({ message: "Error updating cart quantity" });
+  }
+});
+
+app.post("/api/merchant/register", async (req, res) => {
+  try {
+    const {
+      businessName,
+      email,
+      password,
+      phone,
+      address,
+      businessType,
+      description,
+      panCard,
+      aadharCard,
+      gstin,
+    } = req.body;
+
+    // Check if merchant already exists
+    const existingMerchant = await db
+      .collection("merchants")
+      .findOne({ email });
+    if (existingMerchant) {
+      return res.status(400).json({ message: "Merchant already exists" });
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create new merchant
+    const merchant = {
+      businessName,
+      email,
+      password: hashedPassword,
+      phone,
+      address,
+      businessType,
+      description,
+      panCard,
+      aadharCard,
+      gstin,
+      createdAt: new Date(),
+    };
+
+    const result = await db.collection("merchants").insertOne(merchant);
+
+    // Create JWT token
+    const token = jwt.sign(
+      { userId: result.insertedId, email, businessName, isMerchant: true },
+      JWT_SECRET,
+      { expiresIn: "24h" }
+    );
+
+    // Remove password from merchant object before sending response
+    delete merchant.password;
+
+    res.status(201).json({
+      token,
+      user: {
+        id: result.insertedId,
+        ...merchant,
+        isMerchant: true,
+      },
+    });
+  } catch (error) {
+    console.error("Merchant registration error:", error);
+    res.status(500).json({ message: "Error creating merchant account" });
+  }
+});
+
+app.post("/api/merchant/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Find merchant
+    const merchant = await db.collection("merchants").findOne({ email });
+    if (!merchant) {
+      return res.status(400).json({ message: "Merchant not found" });
+    }
+
+    // Verify password
+    const isValidPassword = await bcrypt.compare(password, merchant.password);
+    if (!isValidPassword) {
+      return res.status(400).json({ message: "Invalid password" });
+    }
+
+    // Create JWT token
+    const token = jwt.sign(
+      {
+        userId: merchant._id,
+        email: merchant.email,
+        businessName: merchant.businessName,
+        isMerchant: true,
+      },
+      JWT_SECRET,
+      { expiresIn: "24h" }
+    );
+
+    // Remove password from merchant object before sending response
+    delete merchant.password;
+
+    res.json({
+      token,
+      user: {
+        ...merchant,
+        isMerchant: true,
+      },
+    });
+  } catch (error) {
+    console.error("Merchant login error:", error);
+    res.status(500).json({ message: "Error signing in" });
   }
 });
 
