@@ -395,6 +395,140 @@ app.delete("/api/products/:id", async (req, res) => {
   }
 });
 
+// Add these new cart endpoints after your existing endpoints
+app.post("/api/cart", async (req, res) => {
+  try {
+    const { userId, productId, quantity } = req.body;
+    
+    // Check if cart exists for user
+    let cart = await db.collection("carts").findOne({ userId });
+    
+    if (cart) {
+      // Check if product exists in cart
+      const existingProduct = cart.items.find(item => 
+        item.productId.toString() === productId
+      );
+
+      if (existingProduct) {
+        // Update quantity if product exists
+        await db.collection("carts").updateOne(
+          { 
+            userId, 
+            "items.productId": new ObjectId(productId) 
+          },
+          { 
+            $inc: { "items.$.quantity": quantity } 
+          }
+        );
+      } else {
+        // Add new product to cart
+        await db.collection("carts").updateOne(
+          { userId },
+          { 
+            $push: { 
+              items: { 
+                productId: new ObjectId(productId), 
+                quantity 
+              } 
+            } 
+          }
+        );
+      }
+    } else {
+      // Create new cart
+      await db.collection("carts").insertOne({
+        userId,
+        items: [{
+          productId: new ObjectId(productId),
+          quantity
+        }],
+        createdAt: new Date()
+      });
+    }
+
+    res.status(200).json({ message: "Cart updated successfully" });
+  } catch (error) {
+    console.error("Error updating cart:", error);
+    res.status(500).json({ message: "Error updating cart" });
+  }
+});
+
+app.get("/api/cart/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const cart = await db.collection("carts").findOne({ userId });
+    
+    if (!cart) {
+      return res.json({ items: [] });
+    }
+
+    // Get product details for each item in cart
+    const productIds = cart.items.map(item => new ObjectId(item.productId));
+    const products = await db.collection("products")
+      .find({ _id: { $in: productIds } })
+      .toArray();
+
+    // Combine product details with cart quantities
+    const cartItems = cart.items.map(cartItem => {
+      const product = products.find(p => 
+        p._id.toString() === cartItem.productId.toString()
+      );
+      return {
+        ...product,
+        cartQuantity: cartItem.quantity
+      };
+    });
+
+    res.json({ items: cartItems });
+  } catch (error) {
+    console.error("Error fetching cart:", error);
+    res.status(500).json({ message: "Error fetching cart" });
+  }
+});
+
+app.delete("/api/cart/:userId/:productId", async (req, res) => {
+  try {
+    const { userId, productId } = req.params;
+    
+    await db.collection("carts").updateOne(
+      { userId },
+      { 
+        $pull: { 
+          items: { productId: new ObjectId(productId) } 
+        } 
+      }
+    );
+
+    res.json({ message: "Product removed from cart" });
+  } catch (error) {
+    console.error("Error removing product from cart:", error);
+    res.status(500).json({ message: "Error removing product from cart" });
+  }
+});
+
+app.put("/api/cart/:userId/:productId", async (req, res) => {
+  try {
+    const { userId, productId } = req.params;
+    const { quantity } = req.body;
+    
+    await db.collection("carts").updateOne(
+      { 
+        userId, 
+        "items.productId": new ObjectId(productId) 
+      },
+      { 
+        $set: { "items.$.quantity": quantity } 
+      }
+    );
+
+    res.json({ message: "Cart quantity updated" });
+  } catch (error) {
+    console.error("Error updating cart quantity:", error);
+    res.status(500).json({ message: "Error updating cart quantity" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });

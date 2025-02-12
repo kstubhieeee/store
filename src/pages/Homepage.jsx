@@ -5,6 +5,7 @@ import SignInModal from '../components/SignInModal';
 import SignUpModal from '../components/SignUpModal';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import axios from 'axios';
 
 const Homepage = () => {
     const dispatch = useDispatch();
@@ -36,7 +37,7 @@ const Homepage = () => {
         window.location.reload();
     };
 
-    const handleAddToCart = (product) => {
+    const handleAddToCart = async (product) => {
         if (!user) {
             setIsSignInOpen(true);
             return;
@@ -47,18 +48,18 @@ const Homepage = () => {
             return;
         }
 
-        const cart = JSON.parse(localStorage.getItem('cart')) || [];
-        const existingItem = cart.find(item => item._id === product._id);
+        try {
+            await axios.post('http://localhost:5000/api/cart', {
+                userId: user._id,
+                productId: product._id,
+                quantity: 1
+            });
 
-        if (existingItem) {
-            existingItem.cartQuantity += 1;
-            toast.success(`Added another ${product.name} to cart`);
-        } else {
-            cart.push({ ...product, cartQuantity: 1 });
             toast.success(`${product.name} added to cart`);
+        } catch (error) {
+            console.error('Error adding to cart:', error);
+            toast.error('Error adding item to cart');
         }
-
-        localStorage.setItem('cart', JSON.stringify(cart));
     };
 
     const handleViewMore = () => {

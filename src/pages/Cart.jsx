@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import axios from 'axios';
 
 function Cart() {
   const [user, setUser] = useState(null);
@@ -10,44 +11,54 @@ function Cart() {
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (userData) {
-      setUser(JSON.parse(userData));
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+      fetchCart(parsedUser._id);
     }
     setLoading(false);
-    
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      setCartItems(JSON.parse(savedCart));
-    }
   }, []);
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (!user || user.isAdmin) {
-    return <Navigate to="/" />;
-  }
-
-  const removeFromCart = (productId, productName) => {
-    const updatedCart = cartItems.filter(item => item._id !== productId);
-    setCartItems(updatedCart);
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
-    toast.success(`${productName} removed from cart`);
+  const fetchCart = async (userId) => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/cart/${userId}`);
+      setCartItems(response.data.items);
+    } catch (error) {
+      console.error('Error fetching cart:', error);
+      toast.error('Error loading cart items');
+    }
   };
 
-  const updateQuantity = (productId, newQuantity, productName) => {
+  const removeFromCart = async (productId, productName) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/cart/${user._id}/${productId}`);
+      setCartItems(prev => prev.filter(item => item._id !== productId));
+      toast.success(`${productName} removed from cart`);
+    } catch (error) {
+      console.error('Error removing item:', error);
+      toast.error('Error removing item from cart');
+    }
+  };
+
+  const updateQuantity = async (productId, newQuantity, productName) => {
     if (newQuantity < 1) return;
-    
-    const updatedCart = cartItems.map(item => {
-      if (item._id === productId) {
-        return { ...item, cartQuantity: newQuantity };
-      }
-      return item;
-    });
-    
-    setCartItems(updatedCart);
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
-    toast.success(`Updated ${productName} quantity to ${newQuantity}`);
+
+    try {
+      await axios.put(`http://localhost:5000/api/cart/${user._id}/${productId}`, {
+        quantity: newQuantity
+      });
+
+      setCartItems(prev => prev.map(item => {
+        if (item._id === productId) {
+          return { ...item, cartQuantity: newQuantity };
+        }
+        return item;
+      }));
+
+      toast.success(`Updated ${productName} quantity to ${newQuantity}`);
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+      toast.error('Error updating quantity');
+    }
   };
 
   const calculateTotal = () => {
@@ -61,11 +72,19 @@ function Cart() {
     toast.success('Checkout functionality coming soon!');
   };
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!user || user.isAdmin) {
+    return <Navigate to="/" />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold text-white mb-8">Your Cart</h1>
-        
+
         {cartItems.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-400 text-lg">Your cart is empty</p>
@@ -117,7 +136,7 @@ function Cart() {
                 </div>
               ))}
             </div>
-            
+
             <div className="mt-8 border-t border-gray-700 pt-6">
               <div className="flex justify-between items-center text-lg font-semibold text-white">
                 <span>Total:</span>
