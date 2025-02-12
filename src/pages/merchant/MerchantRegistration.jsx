@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { Formik, Form, Field, ErrorMessage } from 'formik';
+import * as Yup from 'yup';
 
 function MerchantRegistration() {
   const navigate = useNavigate();
   const [error, setError] = useState('');
-  const [formData, setFormData] = useState({
+
+  const initialValues = {
     businessName: '',
     email: '',
     password: '',
@@ -17,26 +20,28 @@ function MerchantRegistration() {
     panCard: '',
     aadharCard: '',
     gstin: ''
-  });
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const validationSchema = Yup.object({
+    businessName: Yup.string().required('Required'),
+    email: Yup.string().email('Invalid email format').required('Required'),
+    password: Yup.string().required('Required'),
+    confirmPassword: Yup.string()
+      .oneOf([Yup.ref('password'), ''], 'Passwords must match')
+      .required('Required'),
+    phone: Yup.string().required('Required'),
+    address: Yup.string().required('Required'),
+    businessType: Yup.string().required('Required'),
+    description: Yup.string().required('Required'),
+    panCard: Yup.string().required('Required'),
+    aadharCard: Yup.string().required('Required'),
+    gstin: Yup.string().required('Required')
+  });
+
+  const handleSubmit = async (values, { setSubmitting }) => {
     setError('');
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
     try {
-      const response = await axios.post('http://localhost:5000/api/merchant/register', formData);
+      const response = await axios.post('http://localhost:5000/api/merchant/register', values);
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
       navigate('/merchant/dashboard');
@@ -44,6 +49,7 @@ function MerchantRegistration() {
       setError(error.response?.data?.message || 'Error creating merchant account');
       setTimeout(() => setError(''), 3000);
     }
+    setSubmitting(false);
   };
 
   return (
@@ -55,150 +61,139 @@ function MerchantRegistration() {
             {error}
           </div>
         )}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <input
-              type="text"
-              name="businessName"
-              placeholder="Business Name"
-              value={formData.businessName}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-              required
-            />
-          </div>
+        <Formik
+          initialValues={initialValues}
+          validationSchema={validationSchema}
+          onSubmit={handleSubmit}
+        >
+          {({ isSubmitting }) => (
+            <Form className="space-y-6">
+              <div>
+                <Field
+                  type="text"
+                  name="businessName"
+                  placeholder="Business Name"
+                  className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                />
+                <ErrorMessage name="businessName" component="div" className="text-red-500" />
+              </div>
 
-          <div>
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-              required
-            />
-          </div>
+              <div>
+                <Field
+                  type="email"
+                  name="email"
+                  placeholder="Email"
+                  className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                />
+                <ErrorMessage name="email" component="div" className="text-red-500" />
+              </div>
 
-          <div>
-            <input
-              type="tel"
-              name="phone"
-              placeholder="Phone Number"
-              value={formData.phone}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-              required
-            />
-          </div>
+              <div>
+                <Field
+                  type="tel"
+                  name="phone"
+                  placeholder="Phone Number"
+                  className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                />
+                <ErrorMessage name="phone" component="div" className="text-red-500" />
+              </div>
 
-          <div>
-            <input
-              type="text"
-              name="address"
-              placeholder="Business Address"
-              value={formData.address}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-              required
-            />
-          </div>
+              <div>
+                <Field
+                  type="text"
+                  name="address"
+                  placeholder="Business Address"
+                  className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                />
+                <ErrorMessage name="address" component="div" className="text-red-500" />
+              </div>
 
-          <div>
-            <select
-              name="businessType"
-              value={formData.businessType}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-              required
-            >
-              <option value="">Select Business Type</option>
-              <option value="retail">Retail</option>
-              <option value="wholesale">Wholesale</option>
-              <option value="manufacturer">Manufacturer</option>
-              <option value="service">Service Provider</option>
-            </select>
-          </div>
+              <div>
+                <Field
+                  as="select"
+                  name="businessType"
+                  className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                >
+                  <option value="">Select Business Type</option>
+                  <option value="retail">Retail</option>
+                  <option value="wholesale">Wholesale</option>
+                  <option value="manufacturer">Manufacturer</option>
+                  <option value="service">Service Provider</option>
+                </Field>
+                <ErrorMessage name="businessType" component="div" className="text-red-500" />
+              </div>
 
-          <div>
-            <textarea
-              name="description"
-              placeholder="Business Description"
-              value={formData.description}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-              rows="3"
-              required
-            ></textarea>
-          </div>
+              <div>
+                <Field
+                  as="textarea"
+                  name="description"
+                  placeholder="Business Description"
+                  className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                  rows="3"
+                />
+                <ErrorMessage name="description" component="div" className="text-red-500" />
+              </div>
 
-          <div>
-            <input
-              type="text"
-              name="panCard"
-              placeholder="PAN Card"
-              value={formData.panCard}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-              required
-            />
-          </div>
+              <div>
+                <Field
+                  type="text"
+                  name="panCard"
+                  placeholder="PAN Card"
+                  className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                />
+                <ErrorMessage name="panCard" component="div" className="text-red-500" />
+              </div>
 
-          <div>
-            <input
-              type="text"
-              name="aadharCard"
-              placeholder="Aadhar Card"
-              value={formData.aadharCard}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-              required
-            />
-          </div>
+              <div>
+                <Field
+                  type="text"
+                  name="aadharCard"
+                  placeholder="Aadhar Card"
+                  className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                />
+                <ErrorMessage name="aadharCard" component="div" className="text-red-500" />
+              </div>
 
-          <div>
-            <input
-              type="text"
-              name="gstin"
-              placeholder="GSTIN"
-              value={formData.gstin}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-              required
-            />
-          </div>
+              <div>
+                <Field
+                  type="text"
+                  name="gstin"
+                  placeholder="GSTIN"
+                  className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                />
+                <ErrorMessage name="gstin" component="div" className="text-red-500" />
+              </div>
 
-          <div>
-            <input
-              type="password"
-              name="password"
-              placeholder="Create Password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-              required
-            />
-          </div>
+              <div>
+                <Field
+                  type="password"
+                  name="password"
+                  placeholder="Create Password"
+                  className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                />
+                <ErrorMessage name="password" component="div" className="text-red-500" />
+              </div>
 
-          <div>
-            <input
-              type="password"
-              name="confirmPassword"
-              placeholder="Confirm Password"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-              required
-            />
-          </div>
+              <div>
+                <Field
+                  type="password"
+                  name="confirmPassword"
+                  placeholder="Confirm Password"
+                  className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                />
+                <ErrorMessage name="confirmPassword" component="div" className="text-red-500" />
+              </div>
 
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-300"
-          >
-            Register as Merchant
-          </button>
-        </form>
+              <button
+                type="submit"
+                className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-300"
+                disabled={isSubmitting}
+              >
+                Register as Merchant
+              </button>
+            </Form>
+          )}
+        </Formik>
 
         <div className="mt-6 text-center">
           <span className="text-gray-400">Already have a merchant account? </span>
