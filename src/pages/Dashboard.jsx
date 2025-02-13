@@ -91,13 +91,15 @@ function Dashboard() {
 
   const handleDeleteConfirm = async () => {
     try {
-      await axios.delete(`http://localhost:5000/api/merchant/${deleteModal.merchant._id}`);
-      setMerchants(merchants.filter(m => m._id !== deleteModal.merchant._id));
-      setDeleteModal({ isOpen: false, merchant: null });
-      toast.success('Merchant deleted successfully');
+      const response = await axios.delete(`http://localhost:5000/api/merchant/${deleteModal.merchant._id}`);
+      if (response.data) {
+        setMerchants(merchants.filter(m => m._id !== deleteModal.merchant._id));
+        setDeleteModal({ isOpen: false, merchant: null });
+        toast.success('Merchant deleted successfully');
+      }
     } catch (error) {
       console.error('Error deleting merchant:', error);
-      toast.error('Failed to delete merchant');
+      toast.error(error.response?.data?.message || 'Failed to delete merchant');
     }
   };
 

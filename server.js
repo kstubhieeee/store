@@ -679,6 +679,29 @@ app.get("/api/merchant/list", async (req, res) => {
   }
 });
 
+app.delete("/api/merchant/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid merchant ID" });
+    }
+
+    const result = await db.collection("merchants").deleteOne({
+      _id: new ObjectId(id),
+    });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: "Merchant not found" });
+    }
+
+    res.json({ message: "Merchant deleted successfully", id });
+  } catch (error) {
+    console.error("Error deleting merchant:", error);
+    res.status(500).json({ message: "Error deleting merchant" });
+  }
+});
+
 // Update merchant status
 app.put("/api/merchant/:id/status", async (req, res) => {
   try {
