@@ -42,7 +42,7 @@ function Dashboard() {
           ? { ...merchant, status: newStatus }
           : merchant
       ));
-      toast.success(`Merchant status updated to ${newStatus}`);
+      toast.success(`Merchant ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
     } catch (error) {
       console.error('Error updating merchant status:', error);
       toast.error('Failed to update merchant status');
@@ -200,7 +200,7 @@ function Dashboard() {
       },
       cell: row => (
         <select
-          value={row.status || 'active'}
+          value={row.status || 'inactive'}
           onChange={(e) => handleStatusChange(row._id, e.target.value)}
           className="px-3 py-1.5 bg-gray-700 border border-gray-600 rounded text-gray-200 focus:outline-none focus:border-blue-500"
         >
