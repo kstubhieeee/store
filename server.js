@@ -666,6 +666,77 @@ app.post("/api/merchant/login", async (req, res) => {
   }
 });
 
+// Add these routes after your existing merchant routes
+
+// Get all merchants
+app.get("/api/merchant/list", async (req, res) => {
+  try {
+    const merchants = await db.collection("merchants").find({}).toArray();
+    res.json(merchants);
+  } catch (error) {
+    console.error("Error fetching merchants:", error);
+    res.status(500).json({ message: "Error fetching merchants" });
+  }
+});
+
+// Update merchant status
+app.put("/api/merchant/:id/status", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid merchant ID" });
+    }
+
+    const result = await db
+      .collection("merchants")
+      .findOneAndUpdate(
+        { _id: new ObjectId(id) },
+        { $set: { status } },
+        { returnDocument: "after" }
+      );
+
+    if (!result) {
+      return res.status(404).json({ message: "Merchant not found" });
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error("Error updating merchant status:", error);
+    res.status(500).json({ message: "Error updating merchant status" });
+  }
+});
+
+// Update merchant details
+app.put("/api/merchant/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid merchant ID" });
+    }
+
+    const result = await db
+      .collection("merchants")
+      .findOneAndUpdate(
+        { _id: new ObjectId(id) },
+        { $set: updates },
+        { returnDocument: "after" }
+      );
+
+    if (!result) {
+      return res.status(404).json({ message: "Merchant not found" });
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error("Error updating merchant:", error);
+    res.status(500).json({ message: "Error updating merchant" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
