@@ -3,12 +3,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchProducts } from '../store/productsSlice';
 import SignInModal from '../components/SignInModal';
 import SignUpModal from '../components/SignUpModal';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 
 const Homepage = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const products = useSelector((state) => state.products.items);
     const status = useSelector((state) => state.products.status);
     const [displayCount, setDisplayCount] = useState(6);
@@ -74,6 +75,10 @@ const Homepage = () => {
     const handleSignUpClick = () => {
         setIsSignUpOpen(true);
         setIsSignInOpen(false);
+    };
+
+    const handleProductClick = (productId) => {
+        navigate(`/product/${productId}`);
     };
 
     if (status === 'loading') {
@@ -149,7 +154,8 @@ const Homepage = () => {
                     {displayedProducts.map((product) => (
                         <div
                             key={product._id}
-                            className="bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow"
+                            className="bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
+                            onClick={() => handleProductClick(product._id)}
                         >
                             <div className="relative w-full pt-[100%]">
                                 {product.imagePath ? (
@@ -170,7 +176,7 @@ const Homepage = () => {
                                 </h2>
                                 <div className="flex items-baseline mb-2">
                                     <span className="text-2xl font-bold text-green-400">
-                                        ${Number(product.price).toFixed(2)}
+                                        ${(product.price * (1 - product.discount / 100)).toFixed(2)}
                                     </span>
                                     {product.discount > 0 && (
                                         <span className="ml-2 text-sm text-blue-400 font-semibold">
@@ -191,7 +197,10 @@ const Homepage = () => {
                                     </span>
                                     <button
                                         className="px-4 py-2 ml-5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                        onClick={() => handleAddToCart(product)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleAddToCart(product);
+                                        }}
                                     >
                                         Add to Cart
                                     </button>

@@ -5,6 +5,7 @@ import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import Homepage from "./pages/Homepage";
 import Cart from "./pages/Cart";
+import ProductDetails from "./pages/ProductDetails";
 import 'boxicons/css/boxicons.min.css';
 import './styles.css';
 import AddProducts from "./pages/AddProducts";
@@ -43,6 +44,7 @@ function App() {
       />
       <Routes>
         <Route path="/" element={<Homepage />} />
+        <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/admin/signin" element={<SignIn />} />
         <Route path="/admin/signup" element={<SignUp />} />
         <Route path="/merchant/registration" element={<MerchantRegistration />} />
