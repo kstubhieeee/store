@@ -1,13 +1,13 @@
-import { useNavigate } from 'react-router-dom';
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sidebar } from '../components/Sidebar';
 import { Bars3Icon } from "@heroicons/react/24/solid";
 import { EyeIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import DataTable from 'react-data-table-component';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { Dialog, Transition } from '@headlessui/react'
-import { Fragment } from 'react'
+import { Dialog, Transition } from '@headlessui/react';
+import { Fragment } from 'react';
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -16,9 +16,10 @@ function Dashboard() {
   const [filterText, setFilterText] = useState("");
   const [resetPaginationToggle, setResetPaginationToggle] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({});
+  const [editModal, setEditModal] = useState({ isOpen: false, merchant: null });
   const [viewModal, setViewModal] = useState({ isOpen: false, merchant: null });
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, merchant: null });
+  const [editForm, setEditForm] = useState({});
 
   useEffect(() => {
     fetchMerchants();
@@ -53,17 +54,15 @@ function Dashboard() {
     }
   };
 
-  const handleEditClick = (row) => {
-    setEditingId(row._id);
+  const handleEditClick = (merchant) => {
+    setEditModal({ 
+      isOpen: true, 
+      merchant: merchant 
+    });
     setEditForm({
-      businessName: row.businessName,
-      email: row.email,
-      phone: row.phone,
-      address: row.address,
-      businessType: row.businessType,
-      panCard: row.panCard,
-      aadharCard: row.aadharCard,
-      gstin: row.gstin
+      phone: merchant.phone,
+      address: merchant.address,
+      description: merchant.description
     });
   };
 
@@ -71,20 +70,17 @@ function Dashboard() {
     setViewModal({ isOpen: true, merchant });
   };
 
-  const handleEditChange = (e, field) => {
-    setEditForm(prev => ({
-      ...prev,
-      [field]: e.target.value
-    }));
+  const handleDeleteClick = (merchant) => {
+    setDeleteModal({ isOpen: true, merchant });
   };
 
-  const handleEditSave = async (id) => {
+  const handleEditSave = async () => {
     try {
-      const response = await axios.put(`http://localhost:5000/api/merchant/${id}`, editForm);
+      const response = await axios.put(`http://localhost:5000/api/merchant/${editModal.merchant._id}`, editForm);
       setMerchants(merchants.map(merchant => 
-        merchant._id === id ? { ...merchant, ...response.data } : merchant
+        merchant._id === editModal.merchant._id ? { ...merchant, ...response.data } : merchant
       ));
-      setEditingId(null);
+      setEditModal({ isOpen: false, merchant: null });
       setEditForm({});
       toast.success('Merchant details updated successfully');
     } catch (error) {
@@ -93,9 +89,16 @@ function Dashboard() {
     }
   };
 
-  const handleEditCancel = () => {
-    setEditingId(null);
-    setEditForm({});
+  const handleDeleteConfirm = async () => {
+    try {
+      await axios.delete(`http://localhost:5000/api/merchant/${deleteModal.merchant._id}`);
+      setMerchants(merchants.filter(m => m._id !== deleteModal.merchant._id));
+      setDeleteModal({ isOpen: false, merchant: null });
+      toast.success('Merchant deleted successfully');
+    } catch (error) {
+      console.error('Error deleting merchant:', error);
+      toast.error('Failed to delete merchant');
+    }
   };
 
   const columns = [
@@ -107,16 +110,7 @@ function Dashboard() {
         minWidth: "200px"
       },
       cell: row => (
-        editingId === row._id ? (
-          <input
-            type="text"
-            value={editForm.businessName}
-            onChange={(e) => handleEditChange(e, 'businessName')}
-            className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-gray-200"
-          />
-        ) : (
-          <div className="py-2 font-medium">{row.businessName}</div>
-        )
+        <div className="py-2 font-medium">{row.businessName}</div>
       ),
     },
     {
@@ -127,16 +121,7 @@ function Dashboard() {
         minWidth: "150px"
       },
       cell: row => (
-        editingId === row._id ? (
-          <input
-            type="text"
-            value={editForm.gstin}
-            onChange={(e) => handleEditChange(e, 'gstin')}
-            className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-gray-200"
-          />
-        ) : (
-          <div className="py-2 font-mono">{row.gstin}</div>
-        )
+        <div className="py-2 font-mono">{row.gstin}</div>
       ),
     },
     {
@@ -147,16 +132,7 @@ function Dashboard() {
         minWidth: "150px"
       },
       cell: row => (
-        editingId === row._id ? (
-          <input
-            type="text"
-            value={editForm.panCard}
-            onChange={(e) => handleEditChange(e, 'panCard')}
-            className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-gray-200"
-          />
-        ) : (
-          <div className="py-2 font-mono">{row.panCard}</div>
-        )
+        <div className="py-2 font-mono">{row.panCard}</div>
       ),
     },
     {
@@ -383,6 +359,7 @@ function Dashboard() {
         </main>
       </div>
 
+      {/* View Modal */}
       <Transition.Root show={viewModal.isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-50" onClose={() => setViewModal({ isOpen: false, merchant: null })}>
           <Transition.Child
@@ -469,6 +446,162 @@ function Dashboard() {
                       onClick={() => setViewModal({ isOpen: false, merchant: null })}
                     >
                       Close
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition.Root>
+
+      {/* Edit Modal */}
+      <Transition.Root show={editModal.isOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => setEditModal({ isOpen: false, merchant: null })}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 z-10 overflow-y-auto">
+            <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                enterTo="opacity-100 translate-y-0 sm:scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+                leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              >
+                <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-gray-800 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+                  <div>
+                    <div className="mt-3 sm:mt-5">
+                      <Dialog.Title as="h3" className="text-2xl font-semibold leading-6 text-white mb-4">
+                        Edit Merchant Details
+                      </Dialog.Title>
+                      <div className="mt-4 space-y-4">
+                        {editModal.merchant && (
+                          <>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-400">Business Name</label>
+                              <p className="mt-1 text-white">{editModal.merchant.businessName}</p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-400">Phone</label>
+                              <input
+                                type="text"
+                                value={editForm.phone || ''}
+                                onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                                className="mt-1 block w-full rounded-md border-0 py-1.5 bg-gray-700 text-white shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm sm:leading-6"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-400">Address</label>
+                              <input
+                                type="text"
+                                value={editForm.address || ''}
+                                onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                                className="mt-1 block w-full rounded-md border-0 py-1.5 bg-gray-700 text-white shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm sm:leading-6"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-400">Description</label>
+                              <textarea
+                                value={editForm.description || ''}
+                                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                                rows={3}
+                                className="mt-1 block w-full rounded-md border-0 py-1.5 bg-gray-700 text-white shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm sm:leading-6"
+                              />
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-5 sm:mt-6 flex gap-3">
+                    <button
+                      type="button"
+                      className="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                      onClick={handleEditSave}
+                    >
+                      Save Changes
+                    </button>
+                    <button
+                      type="button"
+                      className="inline-flex w-full justify-center rounded-md bg-gray-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600"
+                      onClick={() => setEditModal({ isOpen: false, merchant: null })}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition.Root>
+
+      {/* Delete Confirmation Modal */}
+      <Transition.Root show={deleteModal.isOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => setDeleteModal({ isOpen: false, merchant: null })}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 z-10 overflow-y-auto">
+            <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                enterTo="opacity-100 translate-y-0 sm:scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+                leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              >
+                <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-gray-800 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+                  <div>
+                    <div className="mt-3 text-center sm:mt-5">
+                      <Dialog.Title as="h3" className="text-2xl font-semibold leading-6 text-white mb-4">
+                        Delete Merchant
+                      </Dialog.Title>
+                      <div className="mt-2">
+                        <p className="text-gray-400">
+                          Are you sure you want to delete {deleteModal.merchant?.businessName}? This action cannot be undone.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-5 sm:mt-6 flex gap-3">
+                    <button
+                      type="button"
+                      className="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
+                      onClick={handleDeleteConfirm}
+                    >
+                      Delete
+                    </button>
+                    <button
+                      type="button"
+                      className="inline-flex w-full justify-center rounded-md bg-gray-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600"
+                      onClick={() => setDeleteModal({ isOpen: false, merchant: null })}
+                    >
+                      Cancel
                     </button>
                   </div>
                 </Dialog.Panel>
