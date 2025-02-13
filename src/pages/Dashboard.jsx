@@ -2,9 +2,12 @@ import { useNavigate } from 'react-router-dom';
 import { useState, useEffect, useMemo } from 'react';
 import { Sidebar } from '../components/Sidebar';
 import { Bars3Icon } from "@heroicons/react/24/solid";
+import { EyeIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import DataTable from 'react-data-table-component';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { Dialog, Transition } from '@headlessui/react'
+import { Fragment } from 'react'
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -15,6 +18,7 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const [viewModal, setViewModal] = useState({ isOpen: false, merchant: null });
 
   useEffect(() => {
     fetchMerchants();
@@ -63,6 +67,10 @@ function Dashboard() {
     });
   };
 
+  const handleViewClick = (merchant) => {
+    setViewModal({ isOpen: true, merchant });
+  };
+
   const handleEditChange = (e, field) => {
     setEditForm(prev => ({
       ...prev,
@@ -108,46 +116,6 @@ function Dashboard() {
           />
         ) : (
           <div className="py-2 font-medium">{row.businessName}</div>
-        )
-      ),
-    },
-    {
-      name: "Email",
-      selector: row => row.email,
-      sortable: true,
-      style: {
-        minWidth: "200px"
-      },
-      cell: row => (
-        editingId === row._id ? (
-          <input
-            type="email"
-            value={editForm.email}
-            onChange={(e) => handleEditChange(e, 'email')}
-            className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-gray-200"
-          />
-        ) : (
-          <div className="py-2">{row.email}</div>
-        )
-      ),
-    },
-    {
-      name: "Phone",
-      selector: row => row.phone,
-      sortable: true,
-      style: {
-        minWidth: "150px"
-      },
-      cell: row => (
-        editingId === row._id ? (
-          <input
-            type="text"
-            value={editForm.phone}
-            onChange={(e) => handleEditChange(e, 'phone')}
-            className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-gray-200"
-          />
-        ) : (
-          <div className="py-2">{row.phone}</div>
         )
       ),
     },
@@ -215,30 +183,28 @@ function Dashboard() {
         minWidth: "150px"
       },
       cell: row => (
-        <div className="flex flex-wrap gap-2">
-          {editingId === row._id ? (
-            <>
-              <button
-                onClick={() => handleEditSave(row._id)}
-                className="px-3 py-1.5 bg-green-500/10 text-green-400 rounded-md hover:bg-green-500/20 transition-colors text-sm font-medium whitespace-nowrap"
-              >
-                Save
-              </button>
-              <button
-                onClick={handleEditCancel}
-                className="px-3 py-1.5 bg-gray-500/10 text-gray-400 rounded-md hover:bg-gray-500/20 transition-colors text-sm font-medium whitespace-nowrap"
-              >
-                Cancel
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => handleEditClick(row)}
-              className="px-3 py-1.5 bg-blue-500/10 text-blue-400 rounded-md hover:bg-blue-500/20 transition-colors text-sm font-medium whitespace-nowrap"
-            >
-              Edit
-            </button>
-          )}
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleViewClick(row)}
+            className="p-2 text-blue-400 hover:text-blue-300 transition-colors"
+            title="View Details"
+          >
+            <EyeIcon className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => handleEditClick(row)}
+            className="p-2 text-green-400 hover:text-green-300 transition-colors"
+            title="Edit"
+          >
+            <PencilIcon className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => handleDeleteClick(row)}
+            className="p-2 text-red-400 hover:text-red-300 transition-colors"
+            title="Delete"
+          >
+            <TrashIcon className="w-5 h-5" />
+          </button>
         </div>
       ),
     },
@@ -416,6 +382,101 @@ function Dashboard() {
           </div>
         </main>
       </div>
+
+      <Transition.Root show={viewModal.isOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => setViewModal({ isOpen: false, merchant: null })}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 z-10 overflow-y-auto">
+            <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                enterTo="opacity-100 translate-y-0 sm:scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+                leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              >
+                <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-gray-800 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+                  <div>
+                    <div className="mt-3 sm:mt-5">
+                      <Dialog.Title as="h3" className="text-2xl font-semibold leading-6 text-white mb-4">
+                        Merchant Details
+                      </Dialog.Title>
+                      <div className="mt-4 space-y-4">
+                        {viewModal.merchant && (
+                          <>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-400">Business Name</label>
+                              <p className="mt-1 text-white">{viewModal.merchant.businessName}</p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-400">Email</label>
+                              <p className="mt-1 text-white">{viewModal.merchant.email}</p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-400">Phone</label>
+                              <p className="mt-1 text-white">{viewModal.merchant.phone}</p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-400">Address</label>
+                              <p className="mt-1 text-white">{viewModal.merchant.address}</p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-400">Business Type</label>
+                              <p className="mt-1 text-white">{viewModal.merchant.businessType}</p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-400">Description</label>
+                              <p className="mt-1 text-white">{viewModal.merchant.description}</p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-400">GSTIN</label>
+                              <p className="mt-1 text-white font-mono">{viewModal.merchant.gstin}</p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-400">PAN Card</label>
+                              <p className="mt-1 text-white font-mono">{viewModal.merchant.panCard}</p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-400">Aadhar Card</label>
+                              <p className="mt-1 text-white font-mono">{viewModal.merchant.aadharCard}</p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-400">Status</label>
+                              <p className="mt-1 text-white">{viewModal.merchant.status || 'inactive'}</p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-5 sm:mt-6">
+                    <button
+                      type="button"
+                      className="inline-flex w-full justify-center rounded-md bg-gray-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600"
+                      onClick={() => setViewModal({ isOpen: false, merchant: null })}
+                    >
+                      Close
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition.Root>
     </div>
   );
 }
