@@ -16,6 +16,7 @@ const Homepage = () => {
     const [isSignInOpen, setIsSignInOpen] = useState(false);
     const [isSignUpOpen, setIsSignUpOpen] = useState(false);
     const [user, setUser] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         if (status === 'idle') {
@@ -81,6 +82,14 @@ const Homepage = () => {
         navigate(`/product/${productId}`);
     };
 
+    // Filter products based on search query
+    const filteredProducts = products.filter(product =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const displayedProducts = filteredProducts.slice(0, displayCount);
+
     if (status === 'loading') {
         return (
             <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -88,8 +97,6 @@ const Homepage = () => {
             </div>
         );
     }
-
-    const displayedProducts = products.slice(0, displayCount);
 
     return (
         <div className="min-h-screen bg-gray-900 flex flex-col">
@@ -149,68 +156,88 @@ const Homepage = () => {
                 </div>
             </header>
 
+            {/* Search Bar */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <div className="relative">
+                    <input
+                        type="text"
+                        placeholder="Search products..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full px-4 py-3 pl-12 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
+                    />
+                    <i className='bx bx-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl'></i>
+                </div>
+            </div>
+
             <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {displayedProducts.map((product) => (
-                        <div
-                            key={product._id}
-                            className="bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
-                            onClick={() => handleProductClick(product._id)}
-                        >
-                            <div className="relative w-full pt-[100%]">
-                                {product.imagePath ? (
-                                    <img
-                                        src={`http://localhost:5000${product.imagePath}`}
-                                        alt={product.name}
-                                        className="absolute top-0 left-0 w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <div className="absolute top-0 left-0 w-full h-full bg-gray-700 flex items-center justify-center">
-                                        <span className="text-gray-400">No image</span>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="p-4">
-                                <h2 className="text-xl font-semibold text-white mb-2 overflow-hidden whitespace-nowrap text-ellipsis">
-                                    {product.name}
-                                </h2>
-                                <div className="flex items-baseline mb-2">
-                                    <span className="text-2xl font-bold text-green-400">
-                                        ${(product.price * (1 - product.discount / 100)).toFixed(2)}
-                                    </span>
-                                    {product.discount > 0 && (
-                                        <span className="ml-2 text-sm text-blue-400 font-semibold">
-                                            {product.discount}% OFF
-                                        </span>
+                {filteredProducts.length === 0 ? (
+                    <div className="text-center py-12">
+                        <p className="text-gray-400 text-lg">No products found matching your search.</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {displayedProducts.map((product) => (
+                            <div
+                                key={product._id}
+                                className="bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
+                                onClick={() => handleProductClick(product._id)}
+                            >
+                                <div className="relative w-full pt-[100%]">
+                                    {product.imagePath ? (
+                                        <img
+                                            src={`http://localhost:5000${product.imagePath}`}
+                                            alt={product.name}
+                                            className="absolute top-0 left-0 w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="absolute top-0 left-0 w-full h-full bg-gray-700 flex items-center justify-center">
+                                            <span className="text-gray-400">No image</span>
+                                        </div>
                                     )}
                                 </div>
-                                <p className="text-gray-400 text-sm mb-4 overflow-hidden text-ellipsis" style={{
-                                    display: '-webkit-box',
-                                    WebkitLineClamp: 2,
-                                    WebkitBoxOrient: 'vertical'
-                                }}>
-                                    {product.description}
-                                </p>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm text-gray-300">
-                                        {product.quantity} in stock
-                                    </span>
-                                    <button
-                                        className="px-4 py-2 ml-5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleAddToCart(product);
-                                        }}
-                                    >
-                                        Add to Cart
-                                    </button>
+                                <div className="p-4">
+                                    <h2 className="text-xl font-semibold text-white mb-2 overflow-hidden whitespace-nowrap text-ellipsis">
+                                        {product.name}
+                                    </h2>
+                                    <div className="flex items-baseline mb-2">
+                                        <span className="text-2xl font-bold text-green-400">
+                                            ${(product.price * (1 - product.discount / 100)).toFixed(2)}
+                                        </span>
+                                        {product.discount > 0 && (
+                                            <span className="ml-2 text-sm text-blue-400 font-semibold">
+                                                {product.discount}% OFF
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-gray-400 text-sm mb-4 overflow-hidden text-ellipsis" style={{
+                                        display: '-webkit-box',
+                                        WebkitLineClamp: 2,
+                                        WebkitBoxOrient: 'vertical'
+                                    }}>
+                                        {product.description}
+                                    </p>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-gray-300">
+                                            {product.quantity} in stock
+                                        </span>
+                                        <button
+                                            className="px-4 py-2 ml-5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleAddToCart(product);
+                                            }}
+                                        >
+                                            Add to Cart
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
 
-                {displayCount < products.length && (
+                {displayCount < filteredProducts.length && (
                     <div className="mt-8 text-center">
                         <button
                             onClick={handleViewMore}
