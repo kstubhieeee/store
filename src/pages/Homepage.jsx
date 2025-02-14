@@ -6,6 +6,11 @@ import SignUpModal from '../components/SignUpModal';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Pagination, Navigation } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/pagination';
+import 'swiper/css/navigation';
 
 const Homepage = () => {
     const dispatch = useDispatch();
@@ -17,13 +22,13 @@ const Homepage = () => {
     const [isSignUpOpen, setIsSignUpOpen] = useState(false);
     const [user, setUser] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [priceRange, setPriceRange] = useState({ min: '', max: '' });
 
     useEffect(() => {
         if (status === 'idle') {
             dispatch(fetchProducts());
         }
 
-        // Check for user data in localStorage
         const userData = localStorage.getItem('user');
         if (userData) {
             setUser(JSON.parse(userData));
@@ -34,7 +39,7 @@ const Homepage = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         localStorage.removeItem('role');
-        localStorage.removeItem('cart'); // Clear cart on sign out
+        localStorage.removeItem('cart');
         setUser(null);
         window.location.reload();
     };
@@ -82,13 +87,22 @@ const Homepage = () => {
         navigate(`/product/${productId}`);
     };
 
-    // Filter products based on search query
-    const filteredProducts = products.filter(product =>
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredProducts = products.filter(product => {
+        const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            product.description.toLowerCase().includes(searchQuery.toLowerCase());
+        
+        const price = product.price * (1 - product.discount / 100);
+        const matchesPrice = (!priceRange.min || price >= Number(priceRange.min)) &&
+            (!priceRange.max || price <= Number(priceRange.max));
+
+        return matchesSearch && matchesPrice;
+    });
 
     const displayedProducts = filteredProducts.slice(0, displayCount);
+
+    const topProducts = [...products]
+        .sort((a, b) => b.discount - a.discount)
+        .slice(0, 5);
 
     if (status === 'loading') {
         return (
@@ -156,17 +170,95 @@ const Homepage = () => {
                 </div>
             </header>
 
-            {/* Search Bar */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <h2 className="text-2xl font-bold text-white mb-6">Featured Products</h2>
                 <div className="relative">
-                    <input
-                        type="text"
-                        placeholder="Search products..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full px-4 py-3 pl-12 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
-                    />
-                    <i className='bx bx-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl'></i>
+                    <Swiper
+                        modules={[Autoplay, Pagination, Navigation]}
+                        spaceBetween={0}
+                        slidesPerView={1}
+                        pagination={{ clickable: true }}
+                        navigation={true}
+                        autoplay={{
+                            delay: 3000,
+                            disableOnInteraction: false,
+                        }}
+                        className="rounded-xl overflow-hidden aspect-[16/9]"
+                    >
+                        {topProducts.map((product) => (
+                            <SwiperSlide key={product._id}>
+                                <div
+                                    className="relative w-full h-full cursor-pointer"
+                                    onClick={() => handleProductClick(product._id)}
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent z-10"></div>
+                                    {product.imagePath ? (
+                                        <img
+                                            src={`http://localhost:5000${product.imagePath}`}
+                                            alt={product.name}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                                            <span className="text-gray-400">No image</span>
+                                        </div>
+                                    )}
+                                    <div className="absolute bottom-0 left-0 right-0 p-8 z-20 text-white">
+                                        <h3 className="text-3xl font-bold mb-2">{product.name}</h3>
+                                        <div className="flex items-center gap-4 mb-4">
+                                            <span className="text-2xl font-bold text-green-400">
+                                                ${(product.price * (1 - product.discount / 100)).toFixed(2)}
+                                            </span>
+                                            {product.discount > 0 && (
+                                                <>
+                                                    <span className="text-xl text-gray-300 line-through">
+                                                        ${product.price.toFixed(2)}
+                                                    </span>
+                                                    <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                                                        {product.discount}% OFF
+                                                    </span>
+                                                </>
+                                            )}
+                                        </div>
+                                        <p className="text-gray-200 max-w-2xl line-clamp-2">
+                                            {product.description}
+                                        </p>
+                                    </div>
+                                </div>
+                            </SwiperSlide>
+                        ))}
+                    </Swiper>
+                </div>
+            </div>
+
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <div className="flex flex-col md:flex-row gap-4">
+                    <div className="flex-1 relative">
+                        <input
+                            type="text"
+                            placeholder="Search products..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full px-4 py-3 pl-12 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
+                        />
+                        <i className='bx bx-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl'></i>
+                    </div>
+                    <div className="flex gap-4">
+                        <input
+                            type="number"
+                            placeholder="Min Price"
+                            value={priceRange.min}
+                            onChange={(e) => setPriceRange(prev => ({ ...prev, min: e.target.value }))}
+                            className="w-32 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
+                        />
+                        <input
+                            type="number"
+                            placeholder="Max Price"
+                            value={priceRange.max}
+                            onChange={(e) => setPriceRange(prev => ({ ...prev, max: e.target.value }))}
+                            className="w-32 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
+                        />
+                    </div>
                 </div>
             </div>
 
