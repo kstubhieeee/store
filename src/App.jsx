@@ -1,23 +1,31 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from 'react-hot-toast';
-import SignIn from "./pages/SignIn";
-import SignUp from "./pages/SignUp";
-import Dashboard from "./pages/Dashboard";
-import Homepage from "./pages/Homepage";
-import Cart from "./pages/Cart";
-import Checkout from "./pages/Checkout";
-import ResultPage from "./pages/ResultPage";
-import ProductDetails from "./pages/ProductDetails";
-import 'boxicons/css/boxicons.min.css';
-import './styles.css';
-import AddProducts from "./pages/AddProducts";
-import ListingProducts from "./pages/ListingProducts";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProtectedCustomerRoute from "./components/ProtectedCustomerRoute";
-import MerchantRegistration from "./pages/merchant/MerchantRegistration";
-import MerchantLogin from "./pages/merchant/MerchantLogin";
-import MerchantDashboard from "./pages/merchant/MerchantDashboard";
 import ProtectedMerchantRoute from "./components/ProtectedMerchantRoute";
+
+// Lazy load components
+const SignIn = lazy(() => import("./pages/SignIn"));
+const SignUp = lazy(() => import("./pages/SignUp"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Homepage = lazy(() => import("./pages/Homepage"));
+const Cart = lazy(() => import("./pages/Cart"));
+const Checkout = lazy(() => import("./pages/Checkout"));
+const ResultPage = lazy(() => import("./pages/ResultPage"));
+const ProductDetails = lazy(() => import("./pages/ProductDetails"));
+const AddProducts = lazy(() => import("./pages/AddProducts"));
+const ListingProducts = lazy(() => import("./pages/ListingProducts"));
+const MerchantRegistration = lazy(() => import("./pages/merchant/MerchantRegistration"));
+const MerchantLogin = lazy(() => import("./pages/merchant/MerchantLogin"));
+const MerchantDashboard = lazy(() => import("./pages/merchant/MerchantDashboard"));
+
+// Loading component for Suspense fallback
+const LoadingFallback = () => (
+  <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+    <div className="text-white">Loading...</div>
+  </div>
+);
 
 function App() {
   return (
@@ -44,70 +52,72 @@ function App() {
           },
         }}
       />
-      <Routes>
-        <Route path="/" element={<Homepage />} />
-        <Route path="/product/:id" element={<ProductDetails />} />
-        <Route path="/admin/signin" element={<SignIn />} />
-        <Route path="/admin/signup" element={<SignUp />} />
-        <Route path="/merchant/registration" element={<MerchantRegistration />} />
-        <Route path="/merchant/login" element={<MerchantLogin />} />
-        <Route
-          path="/merchant/dashboard"
-          element={
-            <ProtectedMerchantRoute>
-              <MerchantDashboard />
-            </ProtectedMerchantRoute>
-          }
-        />
-        <Route
-          path="/cart"
-          element={
-            <ProtectedCustomerRoute>
-              <Cart />
-            </ProtectedCustomerRoute>
-          }
-        />
-        <Route
-          path="/checkout"
-          element={
-            <ProtectedCustomerRoute>
-              <Checkout />
-            </ProtectedCustomerRoute>
-          }
-        />
-        <Route
-          path="/payment/result"
-          element={
-            <ProtectedCustomerRoute>
-              <ResultPage />
-            </ProtectedCustomerRoute>
-          }
-        />
-        <Route
-          path="/admin/dashboard"
-          element={
-            <ProtectedRoute adminRequired={true}>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/product/add"
-          element={
-            <ProtectedRoute adminRequired={true}>
-              <AddProducts />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/product/listing"
-          element={
-            <ProtectedRoute adminRequired={true}>
-              <ListingProducts />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes>
+          <Route path="/" element={<Homepage />} />
+          <Route path="/product/:id" element={<ProductDetails />} />
+          <Route path="/admin/signin" element={<SignIn />} />
+          <Route path="/admin/signup" element={<SignUp />} />
+          <Route path="/merchant/registration" element={<MerchantRegistration />} />
+          <Route path="/merchant/login" element={<MerchantLogin />} />
+          <Route
+            path="/merchant/dashboard"
+            element={
+              <ProtectedMerchantRoute>
+                <MerchantDashboard />
+              </ProtectedMerchantRoute>
+            }
+          />
+          <Route
+            path="/cart"
+            element={
+              <ProtectedCustomerRoute>
+                <Cart />
+              </ProtectedCustomerRoute>
+            }
+          />
+          <Route
+            path="/checkout"
+            element={
+              <ProtectedCustomerRoute>
+                <Checkout />
+              </ProtectedCustomerRoute>
+            }
+          />
+          <Route
+            path="/payment/result"
+            element={
+              <ProtectedCustomerRoute>
+                <ResultPage />
+              </ProtectedCustomerRoute>
+            }
+          />
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute adminRequired={true}>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/product/add"
+            element={
+              <ProtectedRoute adminRequired={true}>
+                <AddProducts />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/product/listing"
+            element={
+              <ProtectedRoute adminRequired={true}>
+                <ListingProducts />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

@@ -485,7 +485,9 @@ const ListingProducts = () => {
                                 responsive
                                 progressPending={status === 'loading'}
                                 progressComponent={<div className="text-center p-4 text-gray-400">Loading...</div>}
+                                }
                                 noDataComponent={<div className="text-center p-4 text-gray-400">No products found</div>}
+                                }
                             />
                         </div>
                     </div>

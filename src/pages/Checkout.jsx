@@ -27,28 +27,24 @@ function Checkout() {
     try {
       const response = await axios.get(`http://localhost:5000/api/cart/${userId}`);
       setCartItems(response.data.items);
-      calculateTotal(response.data.items);
+      const total = response.data.items.reduce((sum, item) => {
+        const price = item.price * (1 - item.discount / 100);
+        return sum + (price * item.cartQuantity);
+      }, 0);
+      setTotalAmount(total);
+      setLoading(false);
     } catch (error) {
       console.error('Error fetching cart:', error);
       toast.error('Error loading cart items');
-    } finally {
       setLoading(false);
     }
-  };
-
-  const calculateTotal = (items) => {
-    const total = items.reduce((sum, item) => {
-      const price = item.price * (1 - item.discount / 100);
-      return sum + (price * item.cartQuantity);
-    }, 0);
-    setTotalAmount(total);
   };
 
   const handleRazorpayPayment = async () => {
     try {
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: totalAmount * 100, // Razorpay expects amount in paise
+        amount: totalAmount * 100,
         currency: "INR",
         name: "TechMart",
         description: "Payment for your order",
@@ -67,16 +63,6 @@ function Checkout() {
         },
         theme: {
           color: "#2563eb"
-        },
-        modal: {
-          ondismiss: function() {
-            navigate('/payment/result', {
-              state: {
-                success: false,
-                error: 'Payment was cancelled'
-              }
-            });
-          }
         }
       };
 
@@ -93,17 +79,46 @@ function Checkout() {
     }
   };
 
-  const handlePayPalPayment = async (data, actions) => {
-    return actions.order.create({
-      purchase_units: [
-        {
-          amount: {
-            value: totalAmount.toFixed(2),
-            currency_code: "USD"
+  const handlePayPalPayment = () => {
+    return {
+      createOrder: (data, actions) => {
+        return actions.order.create({
+          purchase_units: [
+            {
+              amount: {
+                value: totalAmount.toFixed(2),
+                currency_code: "USD"
+              }
+            }
+          ]
+        });
+      },
+      onApprove: async (data, actions) => {
+        const order = await actions.order.capture();
+        navigate('/payment/result', {
+          state: {
+            success: true,
+            paymentId: order.id
           }
-        }
-      ]
-    });
+        });
+      },
+      onError: () => {
+        navigate('/payment/result', {
+          state: {
+            success: false,
+            error: 'PayPal payment failed'
+          }
+        });
+      },
+      onCancel: () => {
+        navigate('/payment/result', {
+          state: {
+            success: false,
+            error: 'Payment was cancelled'
+          }
+        });
+      }
+    };
   };
 
   if (loading) {
@@ -209,33 +224,7 @@ function Checkout() {
               "client-id": import.meta.env.VITE_PAYPAL_CLIENT_ID 
             }}>
               <PayPalButtons
-                createOrder={handlePayPalPayment}
-                onApprove={(data, actions) => {
-                  return actions.order.capture().then((details) => {
-                    navigate('/payment/result', {
-                      state: {
-                        success: true,
-                        paymentId: details.id
-                      }
-                    });
-                  });
-                }}
-                onError={() => {
-                  navigate('/payment/result', {
-                    state: {
-                      success: false,
-                      error: 'PayPal payment failed'
-                    }
-                  });
-                }}
-                onCancel={() => {
-                  navigate('/payment/result', {
-                    state: {
-                      success: false,
-                      error: 'Payment was cancelled'
-                    }
-                  });
-                }}
+                {...handlePayPalPayment()}
                 style={{ layout: "horizontal" }}
               />
             </PayPalScriptProvider>

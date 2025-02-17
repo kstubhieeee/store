@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
@@ -6,42 +6,27 @@ import axios from 'axios';
 function ResultPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [countdown, setCountdown] = useState(5);
-  const [user, setUser] = useState(null);
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
 
   const success = location.state?.success;
   const error = location.state?.error;
   const paymentId = location.state?.paymentId;
 
   useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
-
-    if (success) {
+    if (success && user?._id) {
       clearCart();
     }
 
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          navigate('/');
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    const timer = setTimeout(() => {
+      navigate('/');
+    }, 5000);
 
-    return () => clearInterval(timer);
-  }, [success, navigate]);
+    return () => clearTimeout(timer);
+  }, [success, navigate, user]);
 
   const clearCart = async () => {
     try {
-      if (user?._id) {
-        // Clear the entire cart for the user
-        await axios.delete(`http://localhost:5000/api/cart/${user._id}`);
-      }
+      await axios.delete(`http://localhost:5000/api/cart/${user._id}`);
     } catch (error) {
       console.error('Error clearing cart:', error);
     }
@@ -79,7 +64,7 @@ function ResultPage() {
 
         <div className="mt-6 space-y-4">
           <p className="text-gray-400">
-            Redirecting to home in {countdown} seconds...
+            Redirecting to home in 5 seconds...
           </p>
           <button
             onClick={handleHomeClick}
