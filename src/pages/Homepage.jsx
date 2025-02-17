@@ -170,7 +170,7 @@ const Homepage = () => {
                 </div>
             </header>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 <h2 className="text-2xl font-bold text-white mb-6">Featured Products</h2>
                 <div className="relative">
                     <Swiper
@@ -203,18 +203,18 @@ const Homepage = () => {
                                             <span className="text-gray-400">No image</span>
                                         </div>
                                     )}
-                                    <div className="absolute bottom-0 left-0 right-0 p-8 z-20 text-white">
-                                        <h3 className="text-3xl font-bold mb-2">{product.name}</h3>
-                                        <div className="flex items-center gap-4 mb-4">
-                                            <span className="text-2xl font-bold text-green-400">
+                                    <div className="absolute bottom-0 left-0 right-0 p-4 z-20 text-white">
+                                        <h3 className="text-2xl font-bold mb-2">{product.name}</h3>
+                                        <div className="flex items-center gap-4 mb-2">
+                                            <span className="text-xl font-bold text-green-400">
                                                 ${(product.price * (1 - product.discount / 100)).toFixed(2)}
                                             </span>
                                             {product.discount > 0 && (
                                                 <>
-                                                    <span className="text-xl text-gray-300 line-through">
+                                                    <span className="text-lg text-gray-300 line-through">
                                                         ${product.price.toFixed(2)}
                                                     </span>
-                                                    <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                                                    <span className="bg-red-500 text-white px-2 py-1 rounded-full text-sm font-bold">
                                                         {product.discount}% OFF
                                                     </span>
                                                 </>
