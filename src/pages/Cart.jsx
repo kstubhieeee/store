@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 
 function Cart() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -69,7 +70,7 @@ function Cart() {
   };
 
   const handleCheckout = () => {
-    toast.success('Checkout functionality coming soon!');
+    navigate('/checkout');
   };
 
   if (loading) {

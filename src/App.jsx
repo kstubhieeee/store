@@ -5,6 +5,8 @@ import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import Homepage from "./pages/Homepage";
 import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import ResultPage from "./pages/ResultPage";
 import ProductDetails from "./pages/ProductDetails";
 import 'boxicons/css/boxicons.min.css';
 import './styles.css';
@@ -62,6 +64,22 @@ function App() {
           element={
             <ProtectedCustomerRoute>
               <Cart />
+            </ProtectedCustomerRoute>
+          }
+        />
+        <Route
+          path="/checkout"
+          element={
+            <ProtectedCustomerRoute>
+              <Checkout />
+            </ProtectedCustomerRoute>
+          }
+        />
+        <Route
+          path="/payment/result"
+          element={
+            <ProtectedCustomerRoute>
+              <ResultPage />
             </ProtectedCustomerRoute>
           }
         />

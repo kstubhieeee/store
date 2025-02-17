@@ -783,6 +783,19 @@ app.get("/api/products/:id", async (req, res) => {
   }
 });
 
+app.delete("/api/cart/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    await db.collection("carts").deleteOne({ userId });
+
+    res.json({ message: "Cart cleared successfully" });
+  } catch (error) {
+    console.error("Error clearing cart:", error);
+    res.status(500).json({ message: "Error clearing cart" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
