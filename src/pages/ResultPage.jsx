@@ -15,13 +15,13 @@ function ResultPage() {
   const totalAmount = location.state?.totalAmount;
 
   const [transactionCreated, setTransactionCreated] = useState(false);
-  const transactionCreatedRef = useRef(false); // Ref to track if transaction was created
+  const transactionCreatedRef = useRef(false); 
 
   useEffect(() => {
     if (success && user?._id && paymentId && !transactionCreatedRef.current) {
       createTransaction();
       clearCart();
-      transactionCreatedRef.current = true; // Set ref to true after creating transaction
+      transactionCreatedRef.current = true; 
       setTransactionCreated(true);
     }
 
