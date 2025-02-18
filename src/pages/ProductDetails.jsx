@@ -54,6 +54,10 @@ function ProductDetails() {
     }
   };
 
+  const getImageUrl = (path, size) => {
+    return `http://localhost:5000${path}?size=${size}`;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -100,9 +104,18 @@ function ProductDetails() {
             <div className="h-[400px] md:h-[500px] relative overflow-hidden">
               {product.imagePath ? (
                 <img
-                  src={`http://localhost:5000${product.imagePath}`}
+                  srcSet={`
+                    ${getImageUrl(product.imagePath, '400')} 400w,
+                    ${getImageUrl(product.imagePath, '800')} 800w,
+                    ${getImageUrl(product.imagePath, '1200')} 1200w
+                  `}
+                  sizes="(max-width: 768px) 400px,
+                         (max-width: 1200px) 800px,
+                         1200px"
+                  src={getImageUrl(product.imagePath, '800')}
                   alt={product.name}
                   className="absolute inset-0 w-full h-full object-contain bg-gray-700 p-4"
+                  loading="eager"
                 />
               ) : (
                 <div className="absolute inset-0 bg-gray-700 flex items-center justify-center">

@@ -73,6 +73,10 @@ function Cart() {
     navigate('/checkout');
   };
 
+  const getImageUrl = (path, size) => {
+    return `http://localhost:5000${path}?size=${size}`;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -99,11 +103,24 @@ function Cart() {
             <div className="space-y-4">
               {cartItems.map((item) => (
                 <div key={item._id} className="flex items-center gap-4 p-4 bg-gray-700 rounded-lg">
-                  <img
-                    src={`http://localhost:5000${item.imagePath}`}
-                    alt={item.name}
-                    className="w-24 h-24 object-cover rounded-md"
-                  />
+                  {item.imagePath ? (
+                    <img
+                      srcSet={`
+                        ${getImageUrl(item.imagePath, '96')} 96w,
+                        ${getImageUrl(item.imagePath, '128')} 128w
+                      `}
+                      sizes="(max-width: 768px) 96px,
+                             128px"
+                      src={getImageUrl(item.imagePath, '96')}
+                      alt={item.name}
+                      className="w-24 h-24 object-cover rounded-md"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 bg-gray-600 rounded-md flex items-center justify-center">
+                      <span className="text-gray-400">No image</span>
+                    </div>
+                  )}
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-white">{item.name}</h3>
                     <div className="flex items-baseline gap-2 mt-1">

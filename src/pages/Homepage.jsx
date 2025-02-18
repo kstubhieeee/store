@@ -112,6 +112,10 @@ function Homepage() {
       .slice(0, 5);
   }, [products]);
 
+  const getImageUrl = (path, size) => {
+    return `http://localhost:5000${path}?size=${size}`;
+  };
+
   if (status === 'loading') {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -202,9 +206,18 @@ function Homepage() {
                   <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent z-10"></div>
                   {product.imagePath ? (
                     <img
-                      src={`http://localhost:5000${product.imagePath}`}
+                      srcSet={`
+                        ${getImageUrl(product.imagePath, '480')} 480w,
+                        ${getImageUrl(product.imagePath, '800')} 800w,
+                        ${getImageUrl(product.imagePath, '1200')} 1200w
+                      `}
+                      sizes="(max-width: 480px) 480px,
+                             (max-width: 800px) 800px,
+                             1200px"
+                      src={getImageUrl(product.imagePath, '800')}
                       alt={product.name}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="w-full h-full bg-gray-700 flex items-center justify-center">
@@ -286,9 +299,18 @@ function Homepage() {
                 <div className="relative w-full pt-[100%]">
                   {product.imagePath ? (
                     <img
-                      src={`http://localhost:5000${product.imagePath}`}
+                      srcSet={`
+                        ${getImageUrl(product.imagePath, '300')} 300w,
+                        ${getImageUrl(product.imagePath, '400')} 400w,
+                        ${getImageUrl(product.imagePath, '600')} 600w
+                      `}
+                      sizes="(max-width: 640px) 300px,
+                             (max-width: 768px) 400px,
+                             600px"
+                      src={getImageUrl(product.imagePath, '400')}
                       alt={product.name}
                       className="absolute top-0 left-0 w-full h-full object-cover"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="absolute top-0 left-0 w-full h-full bg-gray-700 flex items-center justify-center">
