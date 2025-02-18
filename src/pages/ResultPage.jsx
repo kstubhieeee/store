@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
@@ -15,11 +15,13 @@ function ResultPage() {
   const totalAmount = location.state?.totalAmount;
 
   const [transactionCreated, setTransactionCreated] = useState(false);
+  const transactionCreatedRef = useRef(false); // Ref to track if transaction was created
 
   useEffect(() => {
-    if (success && user?._id && paymentId && !transactionCreated) {
+    if (success && user?._id && paymentId && !transactionCreatedRef.current) {
       createTransaction();
       clearCart();
+      transactionCreatedRef.current = true; // Set ref to true after creating transaction
       setTransactionCreated(true);
     }
 
