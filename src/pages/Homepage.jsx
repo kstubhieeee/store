@@ -12,7 +12,7 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faShoppingCart } from '@fortawesome/free-solid-svg-icons';
+import { faShoppingCart, faHistory } from '@fortawesome/free-solid-svg-icons';
 
 function Homepage() {
   const dispatch = useDispatch();
@@ -145,12 +145,20 @@ function Homepage() {
               {user ? (
                 <div className="flex items-center gap-4">
                   {!user.isAdmin && (
-                    <Link
-                      to="/cart"
-                      className="p-2 text-gray-300 hover:text-white transition-colors"
-                    >
-                      <FontAwesomeIcon icon={faShoppingCart} className="text-2xl" />
-                    </Link>
+                    <div className="flex items-center gap-4">
+                      <Link
+                        to="/cart"
+                        className="p-2 text-gray-300 hover:text-white transition-colors"
+                      >
+                        <FontAwesomeIcon icon={faShoppingCart} className="text-2xl" />
+                      </Link>
+                      <Link
+                        to="/history"
+                        className="p-2 text-gray-300 hover:text-white transition-colors"
+                      >
+                        <FontAwesomeIcon icon={faHistory} className="text-2xl" />
+                      </Link>
+                    </div>
                   )}
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">

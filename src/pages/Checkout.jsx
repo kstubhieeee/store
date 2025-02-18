@@ -52,7 +52,10 @@ function Checkout() {
           navigate('/payment/result', {
             state: {
               success: true,
-              paymentId: response.razorpay_payment_id
+              paymentId: response.razorpay_payment_id,
+              items: cartItems,
+              totalAmount,
+              paymentMethod: 'razorpay'
             }
           });
         },
@@ -98,7 +101,10 @@ function Checkout() {
         navigate('/payment/result', {
           state: {
             success: true,
-            paymentId: order.id
+            paymentId: order.id,
+            items: cartItems,
+            totalAmount,
+            paymentMethod: 'paypal'
           }
         });
       },

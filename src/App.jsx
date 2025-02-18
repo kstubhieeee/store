@@ -19,6 +19,7 @@ const ListingProducts = lazy(() => import("./pages/ListingProducts"));
 const MerchantRegistration = lazy(() => import("./pages/merchant/MerchantRegistration"));
 const MerchantLogin = lazy(() => import("./pages/merchant/MerchantLogin"));
 const MerchantDashboard = lazy(() => import("./pages/merchant/MerchantDashboard"));
+const TransactionHistory = lazy(() => import("./pages/TransactionHistory")); // Add this line
 
 // Loading component for Suspense fallback
 const LoadingFallback = () => (
@@ -89,6 +90,14 @@ function App() {
             element={
               <ProtectedCustomerRoute>
                 <ResultPage />
+              </ProtectedCustomerRoute>
+            }
+          />
+          <Route
+            path="/history"
+            element={
+              <ProtectedCustomerRoute>
+                <TransactionHistory />
               </ProtectedCustomerRoute>
             }
           />

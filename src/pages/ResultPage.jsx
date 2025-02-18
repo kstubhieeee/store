@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
@@ -11,10 +11,16 @@ function ResultPage() {
   const success = location.state?.success;
   const error = location.state?.error;
   const paymentId = location.state?.paymentId;
+  const cartItems = location.state?.items;
+  const totalAmount = location.state?.totalAmount;
+
+  const [transactionCreated, setTransactionCreated] = useState(false);
 
   useEffect(() => {
-    if (success && user?._id) {
+    if (success && user?._id && paymentId && !transactionCreated) {
+      createTransaction();
       clearCart();
+      setTransactionCreated(true);
     }
 
     const timer = setTimeout(() => {
@@ -22,7 +28,25 @@ function ResultPage() {
     }, 5000);
 
     return () => clearTimeout(timer);
-  }, [success, navigate, user]);
+  }, [success, navigate, user, paymentId, transactionCreated]);
+
+  const createTransaction = async () => {
+    try {
+      await axios.post('http://localhost:5000/api/transactions', {
+        userId: user._id,
+        items: cartItems.map(item => ({
+          productId: item._id,
+          quantity: item.cartQuantity
+        })),
+        totalAmount,
+        paymentMethod: location.state?.paymentMethod || 'card',
+        paymentId,
+        status: 'completed'
+      });
+    } catch (error) {
+      console.error('Error creating transaction:', error);
+    }
+  };
 
   const clearCart = async () => {
     try {

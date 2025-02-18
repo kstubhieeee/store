@@ -796,6 +796,142 @@ app.delete("/api/cart/:userId", async (req, res) => {
   }
 });
 
+// Create a transaction
+app.post("/api/transactions", async (req, res) => {
+  try {
+    const {
+      userId,
+      items,
+      totalAmount,
+      paymentMethod,
+      paymentId,
+      status = "completed",
+    } = req.body;
+
+    const transaction = {
+      userId,
+      items,
+      totalAmount,
+      paymentMethod,
+      paymentId,
+      status,
+      date: new Date(),
+    };
+
+    const result = await db.collection("transactions").insertOne(transaction);
+    res.status(201).json({ ...transaction, _id: result.insertedId });
+  } catch (error) {
+    console.error("Error creating transaction:", error);
+    res.status(500).json({ message: "Error creating transaction" });
+  }
+});
+
+// Get user's transaction history
+app.get("/api/transactions/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const transactions = await db
+      .collection("transactions")
+      .find({ userId })
+      .sort({ date: -1 }) // Sort by date descending (newest first)
+      .toArray();
+
+    // For each transaction, get the full product details for each item
+    const transactionsWithProducts = await Promise.all(
+      transactions.map(async (transaction) => {
+        const itemsWithDetails = await Promise.all(
+          transaction.items.map(async (item) => {
+            const product = await db
+              .collection("products")
+              .findOne({ _id: new ObjectId(item.productId) });
+            return {
+              ...product,
+              quantity: item.quantity,
+              _id: item.productId,
+            };
+          })
+        );
+
+        return {
+          ...transaction,
+          items: itemsWithDetails,
+        };
+      })
+    );
+
+    res.json(transactionsWithProducts);
+  } catch (error) {
+    console.error("Error fetching transactions:", error);
+    res.status(500).json({ message: "Error fetching transactions" });
+  }
+});
+
+// Update transaction status
+app.put("/api/transactions/:id/status", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid transaction ID" });
+    }
+
+    const result = await db
+      .collection("transactions")
+      .findOneAndUpdate(
+        { _id: new ObjectId(id) },
+        { $set: { status } },
+        { returnDocument: "after" }
+      );
+
+    if (!result) {
+      return res.status(404).json({ message: "Transaction not found" });
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error("Error updating transaction status:", error);
+    res.status(500).json({ message: "Error updating transaction status" });
+  }
+});
+
+// Modify your existing checkout/payment success handlers to create transactions
+
+// Update the successful payment handler in your Razorpay implementation
+const handleRazorpaySuccess = async (userId, paymentId, items, totalAmount) => {
+  try {
+    await db.collection("transactions").insertOne({
+      userId,
+      items,
+      totalAmount,
+      paymentMethod: "razorpay",
+      paymentId,
+      status: "completed",
+      date: new Date(),
+    });
+  } catch (error) {
+    console.error("Error creating transaction record:", error);
+  }
+};
+
+// Update the successful payment handler in your PayPal implementation
+const handlePayPalSuccess = async (userId, paymentId, items, totalAmount) => {
+  try {
+    await db.collection("transactions").insertOne({
+      userId,
+      items,
+      totalAmount,
+      paymentMethod: "paypal",
+      paymentId,
+      status: "completed",
+      date: new Date(),
+    });
+  } catch (error) {
+    console.error("Error creating transaction record:", error);
+  }
+};
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
