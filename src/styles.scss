@@ -1,0 +1,70 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap");
+
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+.tracker-class {
+  margin-left: 70px;
+  margin-top: 50px;
+  color: #ef4444; // Tailwind's red-500
+}
+
+input {
+  background-color: transparent !important;
+  appearance: none !important;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  transition-delay: 9999s;
+  transition-property: background-color, color;
+  -webkit-box-shadow: 0 0 0 30px transparent inset !important;
+  -webkit-text-fill-color: #e5e7eb !important; // Tailwind's gray-200
+}
+
+@media (max-width: 1024px) {
+  .rdt_Table {
+    min-width: 800px;
+  }
+
+  .rdt_TableWrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+}
+
+.bg-gray-800 {
+  overflow-x: auto;
+}
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  min-width: 100%;
+  overflow-x: hidden;
+}
+
+@media (max-width: 640px) {
+  .p-2 {
+    padding: 0.5rem !important;
+  }
+
+  .p-3 {
+    padding: 0.75rem !important;
+  }
+}
