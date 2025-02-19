@@ -290,21 +290,29 @@ const ListingProducts = () => {
       name: "Status",
       selector: (row) => row.status,
       sortable: true,
-      minWidth: "120px",
+      minWidth: "150px",
       cell: (row) => (
-        <div className={`px-3 py-1 rounded-full text-sm font-medium
-          ${row.status === 'approved' ? 'bg-green-500/10 text-green-400' :
-            row.status === 'pending' ? 'bg-yellow-500/10 text-yellow-400' :
-              'bg-red-500/10 text-red-400'}`}>
-          {row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1) : 'Pending'}
-        </div>
+        <select
+          value={row.status || 'pending'}
+          onChange={(e) => handleStatusChange(row._id, e.target.value)}
+          className={`px-3 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-colors
+            ${row.status === 'approved' 
+              ? 'bg-green-500/10 text-green-400 border-green-500/20 focus:ring-green-500' 
+              : row.status === 'pending'
+                ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20 focus:ring-yellow-500'
+                : 'bg-red-500/10 text-red-400 border-red-500/20 focus:ring-red-500'}`}
+        >
+          <option value="approved" className="bg-gray-800 text-green-400">Approved</option>
+          <option value="pending" className="bg-gray-800 text-yellow-400">Pending</option>
+          <option value="declined" className="bg-gray-800 text-red-400">Declined</option>
+        </select>
       ),
     },
     {
       name: "Actions",
-      minWidth: "200px",
+      minWidth: "150px",
       cell: (row) => (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex gap-2">
           {editingId === row._id ? (
             <>
               <button
@@ -333,24 +341,6 @@ const ListingProducts = () => {
                 className="px-3 py-1.5 bg-red-500/10 text-red-400 rounded-md hover:bg-red-500/20 transition-colors text-sm font-medium whitespace-nowrap"
               >
                 Delete
-              </button>
-              <button
-                onClick={() => handleStatusChange(row._id, 'approved')}
-                className="px-3 py-1.5 bg-green-500/10 text-green-400 rounded-md hover:bg-green-500/20 transition-colors text-sm font-medium whitespace-nowrap"
-              >
-                Approve
-              </button>
-              <button
-                onClick={() => handleStatusChange(row._id, 'declined')}
-                className="px-3 py-1.5 bg-red-500/10 text-red-400 rounded-md hover:bg-red-500/20 transition-colors text-sm font-medium whitespace-nowrap"
-              >
-                Decline
-              </button>
-              <button
-                onClick={() => handleStatusChange(row._id, 'pending')}
-                className="px-3 py-1.5 bg-yellow-500/10 text-yellow-400 rounded-md hover:bg-yellow-500/20 transition-colors text-sm font-medium whitespace-nowrap"
-              >
-                Pending
               </button>
             </>
           )}
