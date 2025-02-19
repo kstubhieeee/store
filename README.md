@@ -23,26 +23,20 @@ A modern e-commerce platform built with React, Node.js, and MongoDB.
   - Delete products
 - **Product Details**
   - Product name and description
-  - Pricing with discount support
+  - Pricing with discount support (now displays original price with strikethrough)
   - Stock quantity tracking
   - Product images with preview
 - **Product Listing**
   - Responsive grid layout
   - Dynamic loading with "View More" functionality
-  - Real-time search and filtering
-  - Sortable product tables in admin view
+  - Enhanced input fields for better user experience
 
-### User Interface
+### Transaction Management
 
-- **Modern Design**
-  - Dark theme
-  - Responsive layout for all devices
-  - Smooth transitions and animations
-  - User-friendly navigation
-- **Interactive Components**
-  - Modal dialogs for user actions
-  - Confirmation dialogs for critical actions
-  - Collapsible sidebar navigation
+- **Transaction History**
+  - View transaction history with detailed item breakdown
+  - Display of discounted prices with strikethrough for original prices
+  - Total amount and payment method details
 
 ### Security Features
 
@@ -68,3 +62,11 @@ A modern e-commerce platform built with React, Node.js, and MongoDB.
   - Lazy loading for better performance
   - Efficient state management with Redux
   - Fast development server with Vite
+
+### User Interface Enhancements
+
+- **Interactive Components**
+  - Modal dialogs for user actions
+  - Confirmation dialogs for critical actions
+  - Collapsible sidebar navigation
+  - Improved styling for input fields and buttons
