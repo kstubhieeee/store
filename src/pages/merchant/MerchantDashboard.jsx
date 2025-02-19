@@ -25,7 +25,7 @@ function MerchantDashboard() {
   const fetchMerchantProducts = async (merchantId) => {
     try {
       const response = await axios.get(`http://localhost:5000/api/products?merchantId=${merchantId}`);
-      setProducts(response.data);
+      setProducts(response.data.filter(product => product.merchantId === merchantId));
     } catch (error) {
       console.error('Error fetching products:', error);
     }
@@ -72,7 +72,7 @@ function MerchantDashboard() {
       sortable: true,
       cell: row => (
         <div className="text-green-400 font-medium">
-          ${Number(row.price).toFixed(2)}
+          ₹{Number(row.price).toFixed(2)}
         </div>
       ),
     },
@@ -101,13 +101,13 @@ function MerchantDashboard() {
   );
 
   const subHeaderComponentMemo = (
-    <div className="w-full mb-4">
+    <div className="w-full bg-gray-800 rounded-lg">
       <input
         type="text"
         placeholder="Search products..."
         value={filterText}
         onChange={e => setFilterText(e.target.value)}
-        className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
+        className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500 focus:ring focus:ring-blue-500/50 transition duration-200"
       />
     </div>
   );
@@ -184,10 +184,10 @@ function MerchantDashboard() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="max-w-7xl bg-gray-800  mx-auto px-4 py-8">
         <div className="bg-gray-800 rounded-lg shadow-xl p-6">
           <h2 className="text-xl font-semibold text-white mb-6">Your Products</h2>
-          
+
           <DataTable
             columns={columns}
             data={filteredItems}

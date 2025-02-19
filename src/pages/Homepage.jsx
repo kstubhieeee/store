@@ -98,7 +98,7 @@ function Homepage() {
     return products.filter(product => {
       const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.description.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       const price = product.price * (1 - product.discount / 100);
       const matchesPrice = (!priceRange.min || price >= Number(priceRange.min)) &&
         (!priceRange.max || price <= Number(priceRange.max));
@@ -241,12 +241,12 @@ function Homepage() {
                     <h3 className="text-2xl font-bold mb-2">{product.name}</h3>
                     <div className="flex items-center gap-4 mb-2">
                       <span className="text-xl font-bold text-green-400">
-                        ${(product.price * (1 - product.discount / 100)).toFixed(2)}
+                        ₹{(product.price * (1 - product.discount / 100)).toFixed(2)}
                       </span>
                       {product.discount > 0 && (
                         <>
                           <span className="text-lg text-gray-300 line-through">
-                            ${product.price.toFixed(2)}
+                            ₹{product.price.toFixed(2)}
                           </span>
                           <span className="bg-red-500 text-white px-2 py-1 rounded-full text-sm font-bold">
                             {product.discount}% OFF
@@ -337,11 +337,11 @@ function Homepage() {
                   </h2>
                   <div className="flex items-baseline mb-2">
                     <span className="text-2xl font-bold text-green-400">
-                      ${(product.price * (1 - product.discount / 100)).toFixed(2)}
+                      ₹{(product.price * (1 - product.discount / 100)).toFixed(2)}
                     </span>
                     {product.discount > 0 && (
-                      <span className="ml-2 text-sm text-blue-400 font-semibold">
-                        {product.discount}% OFF
+                      <span className="ml-2 text-sm line-through text-blue-400 font-semibold">
+                        ₹{product.price.toFixed(2)}
                       </span>
                     )}
                   </div>

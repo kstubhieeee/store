@@ -86,11 +86,11 @@ function TransactionHistory() {
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-semibold text-green-400">
-                          ${(item.price * (1 - item.discount / 100)).toFixed(2)}
+                          ₹{(item.price * (1 - item.discount / 100)).toFixed(2)}
                         </p>
                         {item.discount > 0 && (
                           <p className="text-sm text-gray-400 line-through">
-                            ${item.price.toFixed(2)}
+                            ₹{item.price.toFixed(2)}
                           </p>
                         )}
                       </div>

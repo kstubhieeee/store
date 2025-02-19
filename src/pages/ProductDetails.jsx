@@ -127,12 +127,12 @@ function ProductDetails() {
               <h1 className="text-3xl font-bold text-white mb-4">{product.name}</h1>
               <div className="flex items-baseline mb-6">
                 <span className="text-xl font-bold text-green-400">
-                  ${(product.price * (1 - product.discount / 100)).toFixed(2)}
+                  ₹{(product.price * (1 - product.discount / 100)).toFixed(2)}
                 </span>
                 {product.discount > 0 && (
                   <div className="ml-4 flex items-center">
                     <span className="text-xl ml-3 text-gray-400 line-through">
-                      ${product.price.toFixed(2)}
+                      ₹{product.price.toFixed(2)}
                     </span>
                     <span className="ml-2 px-2 py-1 bg-blue-500/10 text-blue-400 rounded-full text-sm font-semibold">
                       {product.discount}% OFF
@@ -157,8 +157,8 @@ function ProductDetails() {
                   onClick={handleAddToCart}
                   disabled={product.quantity === 0}
                   className={`w-full py-4 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2
-                    ${product.quantity > 0 
-                      ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                    ${product.quantity > 0
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
                       : 'bg-gray-700 text-gray-400 cursor-not-allowed'}`}
                 >
                   <i className='bx bx-cart-add text-xl'></i>

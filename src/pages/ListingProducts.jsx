@@ -228,7 +228,7 @@ const ListingProducts = () => {
             className="w-20 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-gray-200"
           />
         ) : (
-          <div className="text-green-400 font-medium">${Number(row.price).toFixed(2)}</div>
+          <div className="text-green-400 font-medium">₹{Number(row.price).toFixed(2)}</div>
         ),
     },
     {
@@ -497,7 +497,7 @@ const ListingProducts = () => {
               </div>
             )}
 
-            <div className="overflow-hidden">
+            <div className="overflow-hidden ">
               <DataTable
                 columns={columns}
                 data={filteredItems}
@@ -512,7 +512,7 @@ const ListingProducts = () => {
                 responsive
                 progressPending={status === "loading"}
                 progressComponent={<div className="text-center p-4 text-gray-400">Loading...</div>}
-                noDataComponent={<div className="text-center p-4 text-gray-400">No products found</div>}
+                noDataComponent={<div className="text-  p-4 text-gray-400">No products found</div>}
               />
             </div>
           </div>
