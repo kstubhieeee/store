@@ -6,6 +6,7 @@ import DataTable from "react-data-table-component";
 import { Bars3Icon } from "@heroicons/react/24/solid";
 import DeleteConfirmationModal from "../components/DeleteConfirmationModal";
 import axios from "axios";
+import { FaUpload } from 'react-icons/fa';
 
 const ListingProducts = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -172,7 +173,7 @@ const ListingProducts = () => {
                     accept="image/*"
                     onChange={(e) => handleImageChange(e, row)}
                   />
-                  <i className="bx bx-upload text-white text-xl"></i>
+                  <FaUpload className="text-white text-xl" />
                 </label>
               </div>
             </>
@@ -187,7 +188,7 @@ const ListingProducts = () => {
                     accept="image/*"
                     onChange={(e) => handleImageChange(e, row)}
                   />
-                  <i className="bx bx-upload text-white text-xl"></i>
+                  <FaUpload className="text-white text-xl" />
                 </label>
               </div>
             </div>
@@ -296,8 +297,8 @@ const ListingProducts = () => {
           value={row.status || 'pending'}
           onChange={(e) => handleStatusChange(row._id, e.target.value)}
           className={`px-3 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-colors
-            ${row.status === 'approved' 
-              ? 'bg-green-500/10 text-green-400 border-green-500/20 focus:ring-green-500' 
+            ${row.status === 'approved'
+              ? 'bg-green-500/10 text-green-400 border-green-500/20 focus:ring-green-500'
               : row.status === 'pending'
                 ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20 focus:ring-yellow-500'
                 : 'bg-red-500/10 text-red-400 border-red-500/20 focus:ring-red-500'}`}
