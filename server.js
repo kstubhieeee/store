@@ -314,7 +314,15 @@ app.get("/api/products", async (req, res) => {
 
 app.post("/api/products", upload.single("image"), async (req, res) => {
   try {
-    const { name, price, discount, description, quantity } = req.body;
+    const {
+      name,
+      price,
+      discount,
+      description,
+      quantity,
+      merchantId,
+      merchantName,
+    } = req.body;
     const imagePath = req.file ? `/images/${req.file.filename}` : null;
 
     const product = {
@@ -324,6 +332,9 @@ app.post("/api/products", upload.single("image"), async (req, res) => {
       description,
       quantity: Number(quantity),
       imagePath,
+      merchantId,
+      merchantName,
+      status: "pending", // Set default status to 'pending'
     };
 
     const result = await db.collection("products").insertOne(product);
@@ -380,6 +391,30 @@ app.put("/api/products/:id", upload.single("image"), async (req, res) => {
   } catch (error) {
     console.error("Error updating product:", error);
     res.status(500).json({ message: "Error updating product" });
+  }
+});
+
+app.put("/api/products/:id/status", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid product ID" });
+    }
+
+    const result = await db
+      .collection("products")
+      .updateOne({ _id: new ObjectId(id) }, { $set: { status } });
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.json({ message: "Product status updated successfully" });
+  } catch (error) {
+    console.error("Error updating product status:", error);
+    res.status(500).json({ message: "Error updating product status" });
   }
 });
 

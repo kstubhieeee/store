@@ -17,7 +17,7 @@ import { faShoppingCart, faHistory } from '@fortawesome/free-solid-svg-icons';
 function Homepage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const products = useSelector((state) => state.products.items);
+  const allProducts = useSelector((state) => state.products.items);
   const status = useSelector((state) => state.products.status);
   const [displayCount, setDisplayCount] = useState(6);
   const [isSignInOpen, setIsSignInOpen] = useState(false);
@@ -36,6 +36,11 @@ function Homepage() {
       setUser(JSON.parse(userData));
     }
   }, [status, dispatch]);
+
+  // Filter only approved products
+  const products = useMemo(() => {
+    return allProducts.filter(product => product.status === 'approved');
+  }, [allProducts]);
 
   const handleSignOut = useCallback(() => {
     localStorage.removeItem('token');

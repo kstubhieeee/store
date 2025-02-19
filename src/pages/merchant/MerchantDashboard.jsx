@@ -1,22 +1,35 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sidebar } from '../../components/Sidebar';
+import axios from 'axios';
 import { Bars3Icon } from "@heroicons/react/24/solid";
 import { XCircleIcon } from "@heroicons/react/24/outline";
+import DataTable from 'react-data-table-component';
 
 function MerchantDashboard() {
   const navigate = useNavigate();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filterText, setFilterText] = useState("");
+  const [resetPaginationToggle, setResetPaginationToggle] = useState(false);
 
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem('user'));
     if (userData) {
       setUser(userData);
+      fetchMerchantProducts(userData._id);
     }
     setLoading(false);
   }, []);
+
+  const fetchMerchantProducts = async (merchantId) => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/products?merchantId=${merchantId}`);
+      setProducts(response.data);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -24,15 +37,109 @@ function MerchantDashboard() {
     navigate('/merchant/login');
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
-      </div>
-    );
-  }
+  const handleAddProduct = () => {
+    navigate('/merchant/add');
+  };
 
-  // Show inactive account message if status is inactive or not set
+  const columns = [
+    {
+      name: "Image",
+      cell: row => (
+        <div className="w-16 h-16">
+          {row.imagePath ? (
+            <img
+              src={`http://localhost:5000${row.imagePath}`}
+              alt={row.name}
+              className="w-full h-full object-cover rounded-lg"
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-700 rounded-lg flex items-center justify-center">
+              <span className="text-gray-400 text-xs">No image</span>
+            </div>
+          )}
+        </div>
+      ),
+      width: '100px',
+    },
+    {
+      name: "Product Name",
+      selector: row => row.name,
+      sortable: true,
+    },
+    {
+      name: "Price",
+      selector: row => row.price,
+      sortable: true,
+      cell: row => (
+        <div className="text-green-400 font-medium">
+          ${Number(row.price).toFixed(2)}
+        </div>
+      ),
+    },
+    {
+      name: "Status",
+      selector: row => row.status,
+      sortable: true,
+      cell: row => (
+        <div className={`px-3 py-1 rounded-full text-sm font-medium
+          ${row.status === 'approved' ? 'bg-green-500/10 text-green-400' :
+            row.status === 'pending' ? 'bg-yellow-500/10 text-yellow-400' :
+              'bg-red-500/10 text-red-400'}`}>
+          {row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1) : 'Pending'}
+        </div>
+      ),
+    },
+    {
+      name: "Quantity",
+      selector: row => row.quantity,
+      sortable: true,
+    },
+  ];
+
+  const filteredItems = products.filter(
+    item => item.name && item.name.toLowerCase().includes(filterText.toLowerCase())
+  );
+
+  const subHeaderComponentMemo = (
+    <div className="w-full mb-4">
+      <input
+        type="text"
+        placeholder="Search products..."
+        value={filterText}
+        onChange={e => setFilterText(e.target.value)}
+        className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
+      />
+    </div>
+  );
+
+  const customStyles = {
+    table: {
+      style: {
+        backgroundColor: "#1f2937",
+      },
+    },
+    rows: {
+      style: {
+        backgroundColor: "#1f2937",
+        color: "#e5e7eb",
+        '&:hover': {
+          backgroundColor: "#374151",
+        },
+      },
+    },
+    headRow: {
+      style: {
+        backgroundColor: "#111827",
+        color: "#e5e7eb",
+      },
+    },
+    cells: {
+      style: {
+        padding: '16px',
+      },
+    },
+  };
+
   if (!user?.status || user.status === 'inactive') {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
@@ -42,17 +149,12 @@ function MerchantDashboard() {
           <p className="text-gray-300 mb-6">
             Your merchant account is currently inactive. Please wait for an admin to review and activate your account.
           </p>
-          <div className="space-y-4">
-            <p className="text-gray-400 text-sm">
-              This usually takes 1-2 business days. You'll be notified via email once your account is activated.
-            </p>
-            <button
-              onClick={handleLogout}
-              className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              Sign Out
-            </button>
-          </div>
+          <button
+            onClick={handleLogout}
+            className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Sign Out
+          </button>
         </div>
       </div>
     );
@@ -60,53 +162,46 @@ function MerchantDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-900">
-      <header className="h-16 bg-gray-800 border-b border-gray-700 px-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="p-2 rounded-lg hover:bg-gray-700 transition-colors text-gray-200"
-          >
-            <Bars3Icon className="h-6 w-6" />
-          </button>
-          <h1 className="text-xl font-semibold text-white">
+      <header className="bg-gray-800 border-b border-gray-700 px-4 py-4">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-white">
             Welcome, {user?.businessName || 'Merchant'}
           </h1>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-        >
-          Logout
-        </button>
-      </header>
-      <div className="flex">
-        <Sidebar isOpen={isSidebarOpen} />
-        <main className="flex-1 p-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-gray-800 p-6 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold text-white mb-2">Total Products</h3>
-                <p className="text-3xl font-bold text-blue-400">0</p>
-              </div>
-              <div className="bg-gray-800 p-6 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold text-white mb-2">Total Orders</h3>
-                <p className="text-3xl font-bold text-green-400">0</p>
-              </div>
-              <div className="bg-gray-800 p-6 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold text-white mb-2">Revenue</h3>
-                <p className="text-3xl font-bold text-yellow-400">$0.00</p>
-              </div>
-            </div>
-
-            <div className="mt-8 bg-gray-800 rounded-lg shadow-md p-6">
-              <h2 className="text-2xl font-semibold text-white mb-4">Recent Orders</h2>
-              <div className="text-gray-400 text-center py-8">
-                No orders yet
-              </div>
-            </div>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleAddProduct}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Add New Product
+            </button>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Logout
+            </button>
           </div>
-        </main>
-      </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 py-8">
+        <div className="bg-gray-800 rounded-lg shadow-xl p-6">
+          <h2 className="text-xl font-semibold text-white mb-6">Your Products</h2>
+          
+          <DataTable
+            columns={columns}
+            data={filteredItems}
+            pagination
+            subHeader
+            subHeaderComponent={subHeaderComponentMemo}
+            persistTableHead
+            customStyles={customStyles}
+            progressPending={loading}
+            progressComponent={<div className="text-white text-center py-4">Loading...</div>}
+            noDataComponent={<div className="text-white text-center py-4">No products found</div>}
+          />
+        </div>
+      </main>
     </div>
   );
 }
