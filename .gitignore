@@ -30,3 +30,5 @@ images/
 *.jpg
 *.jpeg
 *.gif
+
+.env
