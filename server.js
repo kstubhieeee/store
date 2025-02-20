@@ -9,6 +9,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import axios from "axios";
 import nodemailer from "nodemailer";
+import crypto from "crypto";
 
 dotenv.config();
 
@@ -240,7 +241,7 @@ app.post("/api/signup", async (req, res) => {
       return res.status(400).json({ message: "reCAPTCHA verification failed" });
     }
 
-    // Rest of the sign-up logic remains the same
+    // Check if user already exists
     const existingUser = await db
       .collection("users")
       .findOne({ email: userData.email });
@@ -248,42 +249,51 @@ app.post("/api/signup", async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const tokenExpiry = new Date();
+    tokenExpiry.setHours(tokenExpiry.getHours() + 24); // Token expires in 24 hours
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(userData.password, salt);
 
     const user = {
       ...userData,
       password: hashedPassword,
+      verificationToken,
+      tokenExpiry,
+      isVerified: false,
       createdAt: new Date(),
     };
 
     const result = await db.collection("users").insertOne(user);
 
-    const token = jwt.sign(
-      {
-        userId: result.insertedId,
-        email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-      },
-      JWT_SECRET,
-      { expiresIn: "24h" }
-    );
+    // Send verification email
+    const verificationUrl = `http://localhost:5000/api/verify/${verificationToken}`;
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: userData.email,
+      subject: "Verify your TechMart account",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2563eb;">Welcome to TechMart!</h2>
+          <p>Please click the button below to verify your email address:</p>
+          <a href="${verificationUrl}" style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 16px 0;">
+            Verify Email
+          </a>
+          <p>If the button doesn't work, you can also click this link:</p>
+          <p><a href="${verificationUrl}">${verificationUrl}</a></p>
+          <p>This link will expire in 24 hours.</p>
+          <p>Best regards,<br>The TechMart Team</p>
+        </div>
+      `,
+    };
 
-    delete user.password;
-
-    // Send welcome email
-    await sendWelcomeEmail(
-      userData.email,
-      `${userData.firstName} ${userData.lastName}`
-    );
+    await transporter.sendMail(mailOptions);
 
     res.status(201).json({
-      token,
-      user: {
-        id: result.insertedId,
-        ...user,
-      },
+      success: true,
+      message: "Verification email sent. Please check your inbox.",
     });
   } catch (error) {
     console.error("Signup error:", error);
@@ -291,6 +301,39 @@ app.post("/api/signup", async (req, res) => {
   }
 });
 
+// Add new verification endpoint
+app.get("/api/verify/:token", async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    const user = await db.collection("users").findOne({
+      verificationToken: token,
+      tokenExpiry: { $gt: new Date() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Invalid or expired verification token",
+      });
+    }
+
+    await db.collection("users").updateOne(
+      { _id: user._id },
+      {
+        $set: { isVerified: true },
+        $unset: { verificationToken: "", tokenExpiry: "" },
+      }
+    );
+
+    // Redirect to sign-in page with success message
+    res.redirect("http://localhost:5173/admin/signin?verified=true");
+  } catch (error) {
+    console.error("Verification error:", error);
+    res.status(500).json({ message: "Error verifying email" });
+  }
+});
+
+// Modify the signin endpoint to check for verification
 app.post("/api/signin", async (req, res) => {
   try {
     const { email, password, recaptchaToken } = req.body;
@@ -305,6 +348,13 @@ app.post("/api/signin", async (req, res) => {
     const user = await db.collection("users").findOne({ email });
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // Check if user is verified
+    if (!user.isVerified) {
+      return res
+        .status(400)
+        .json({ message: "Please verify your email before signing in" });
     }
 
     // Verify password
@@ -327,9 +377,8 @@ app.post("/api/signin", async (req, res) => {
 
     // Remove password from user object before sending response
     delete user.password;
-
-    // Send welcome back email
-    await sendWelcomeEmail(user.email, `${user.firstName} ${user.lastName}`);
+    delete user.verificationToken;
+    delete user.tokenExpiry;
 
     res.json({
       token,
