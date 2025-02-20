@@ -25,7 +25,11 @@ function MerchantDashboard() {
   const fetchMerchantProducts = async (merchantId) => {
     try {
       const response = await axios.get(`http://localhost:5000/api/products?merchantId=${merchantId}`);
-      setProducts(response.data.filter(product => product.merchantId === merchantId));
+      // Sort products by createdAt date in descending order (newest first)
+      const sortedProducts = response.data
+        .filter(product => product.merchantId === merchantId)
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setProducts(sortedProducts);
     } catch (error) {
       console.error('Error fetching products:', error);
     }

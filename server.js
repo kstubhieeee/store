@@ -423,7 +423,8 @@ app.post("/api/products", upload.single("image"), async (req, res) => {
       imagePath,
       merchantId,
       merchantName,
-      status: "pending", // Set default status to 'pending'
+      status: "pending",
+      createdAt: new Date(), // Add creation timestamp
     };
 
     const result = await db.collection("products").insertOne(product);

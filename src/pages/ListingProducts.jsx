@@ -350,9 +350,11 @@ const ListingProducts = () => {
     },
   ];
 
-  const filteredItems = products.filter(
-    (item) => item.name && item.name.toLowerCase().includes(filterText.toLowerCase())
-  );
+  const filteredItems = useMemo(() => {
+    return products
+      .filter(item => item.name && item.name.toLowerCase().includes(filterText.toLowerCase()))
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Sort by creation date
+  }, [products, filterText]);
 
   const subHeaderComponentMemo = useMemo(() => {
     const handleClear = () => {
