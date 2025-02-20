@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
 function SignIn() {
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ function SignIn() {
         const adminResponse = await axios.post('http://localhost:5000/api/admin/signin', formData);
         localStorage.setItem('token', adminResponse.data.token);
         localStorage.setItem('user', JSON.stringify(adminResponse.data.user));
+        toast.success('Welcome back, Admin!');
         navigate('/admin/dashboard');
         return;
       } catch (adminError) {
@@ -38,6 +40,7 @@ function SignIn() {
         const merchantResponse = await axios.post('http://localhost:5000/api/merchant/login', formData);
         localStorage.setItem('token', merchantResponse.data.token);
         localStorage.setItem('user', JSON.stringify(merchantResponse.data.user));
+        toast.success(`Welcome back, ${merchantResponse.data.user.businessName}!`);
         navigate('/merchant/dashboard');
         return;
       } catch (merchantError) {
@@ -55,6 +58,7 @@ function SignIn() {
         });
         localStorage.setItem('token', customerResponse.data.token);
         localStorage.setItem('user', JSON.stringify(customerResponse.data.user));
+        toast.success(`Welcome back, ${customerResponse.data.user.firstName}!`);
         navigate('/');
         return;
       } catch (customerError) {
@@ -62,6 +66,7 @@ function SignIn() {
       }
     } catch (error) {
       setError(error.response?.data?.message || error.message || 'Error signing in');
+      toast.error(error.response?.data?.message || 'Error signing in');
       setTimeout(() => setError(""), 3000);
     }
   };

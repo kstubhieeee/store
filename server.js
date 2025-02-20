@@ -8,12 +8,22 @@ import fs from "fs";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import axios from "axios";
+import nodemailer from "nodemailer";
 
 dotenv.config();
 
 const app = express();
 const port = 5000;
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+
+// Email configuration
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 app.use(cors());
 app.use(express.json());
@@ -96,6 +106,27 @@ async function verifyRecaptcha(token) {
   } catch (error) {
     console.error("reCAPTCHA verification error:", error);
     return false;
+  }
+}
+
+// Function to send welcome email
+async function sendWelcomeEmail(email, name) {
+  try {
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Welcome back to TechMart!",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2563eb;">Welcome back, ${name}!</h2>
+          <p>We're glad to see you again at TechMart. Happy shopping!</p>
+          <p>Best regards,<br>The TechMart Team</p>
+        </div>
+      `,
+    });
+    console.log("Welcome email sent successfully");
+  } catch (error) {
+    console.error("Error sending welcome email:", error);
   }
 }
 
@@ -241,6 +272,12 @@ app.post("/api/signup", async (req, res) => {
 
     delete user.password;
 
+    // Send welcome email
+    await sendWelcomeEmail(
+      userData.email,
+      `${userData.firstName} ${userData.lastName}`
+    );
+
     res.status(201).json({
       token,
       user: {
@@ -290,6 +327,9 @@ app.post("/api/signin", async (req, res) => {
 
     // Remove password from user object before sending response
     delete user.password;
+
+    // Send welcome back email
+    await sendWelcomeEmail(user.email, `${user.firstName} ${user.lastName}`);
 
     res.json({
       token,
