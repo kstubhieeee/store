@@ -15,13 +15,14 @@ function ResultPage() {
   const totalAmount = location.state?.totalAmount;
 
   const [transactionCreated, setTransactionCreated] = useState(false);
-  const transactionCreatedRef = useRef(false); 
+  const transactionCreatedRef = useRef(false);
 
   useEffect(() => {
     if (success && user?._id && paymentId && !transactionCreatedRef.current) {
       createTransaction();
       clearCart();
-      transactionCreatedRef.current = true; 
+      sendConfirmationEmail();
+      transactionCreatedRef.current = true;
       setTransactionCreated(true);
     }
 
@@ -47,6 +48,25 @@ function ResultPage() {
       });
     } catch (error) {
       console.error('Error creating transaction:', error);
+    }
+  };
+
+  const sendConfirmationEmail = async () => {
+    try {
+      const emailData = {
+        to: user.email,
+        subject: 'Order Confirmation - TechMart',
+        orderId: paymentId,
+        items: cartItems,
+        totalAmount,
+        customerName: `${user.firstName} ${user.lastName}`,
+        shippingAddress: user.address,
+        paymentMethod: location.state?.paymentMethod || 'card'
+      };
+
+      await axios.post('http://localhost:5000/api/send-order-confirmation', emailData);
+    } catch (error) {
+      console.error('Error sending confirmation email:', error);
     }
   };
 
@@ -76,6 +96,9 @@ function ResultPage() {
                   Payment ID: {paymentId}
                 </span>
               )}
+            </p>
+            <p className="text-gray-300 mt-4">
+              A confirmation email has been sent to your email address.
             </p>
           </>
         ) : (

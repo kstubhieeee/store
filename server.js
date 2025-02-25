@@ -1057,6 +1057,103 @@ const handlePayPalSuccess = async (userId, paymentId, items, totalAmount) => {
   }
 };
 
+app.post('/api/send-order-confirmation', async (req, res) => {
+  try {
+    const {
+      to,
+      subject,
+      orderId,
+      items,
+      totalAmount,
+      customerName,
+      shippingAddress,
+      paymentMethod
+    } = req.body;
+
+    // Create HTML content for the email
+    const itemsList = items.map(item => `
+      <tr>
+        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">
+          ${item.name}
+        </td>
+        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">
+          ${item.cartQuantity}
+        </td>
+        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right;">
+          $${(item.price * (1 - item.discount / 100)).toFixed(2)}
+        </td>
+        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right;">
+          $${(item.price * (1 - item.discount / 100) * item.cartQuantity).toFixed(2)}
+        </td>
+      </tr>
+    `).join('');
+
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #2563eb; margin: 0;">TechMart</h1>
+          <p style="color: #64748b; margin-top: 5px;">Order Confirmation</p>
+        </div>
+
+        <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+          <h2 style="color: #1e293b; margin-top: 0;">Thank you for your purchase!</h2>
+          <p style="color: #64748b;">Hello ${customerName},</p>
+          <p style="color: #64748b;">Your order has been confirmed and will be shipped soon.</p>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <h3 style="color: #1e293b; margin-bottom: 10px;">Order Details</h3>
+          <p style="color: #64748b; margin: 5px 0;">Order ID: ${orderId}</p>
+          <p style="color: #64748b; margin: 5px 0;">Payment Method: ${paymentMethod}</p>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+          <thead>
+            <tr style="background-color: #f1f5f9;">
+              <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0;">Item</th>
+              <th style="padding: 12px; text-align: center; border-bottom: 2px solid #e2e8f0;">Qty</th>
+              <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e2e8f0;">Price</th>
+              <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e2e8f0;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsList}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3" style="padding: 12px; text-align: right; font-weight: bold;">Total Amount:</td>
+              <td style="padding: 12px; text-align: right; font-weight: bold;">$${totalAmount.toFixed(2)}</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div style="margin-bottom: 20px;">
+          <h3 style="color: #1e293b; margin-bottom: 10px;">Shipping Address</h3>
+          <p style="color: #64748b; white-space: pre-line;">${shippingAddress}</p>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+          <p style="color: #64748b; margin-bottom: 10px;">If you have any questions, please contact our support team.</p>
+          <p style="color: #64748b; margin: 0;">Thank you for shopping with TechMart!</p>
+        </div>
+      </div>
+    `;
+
+    // Send the email
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to,
+      subject,
+      html: emailHtml
+    });
+
+    res.json({ message: 'Order confirmation email sent successfully' });
+  } catch (error) {
+    console.error('Error sending order confirmation email:', error);
+    res.status(500).json({ message: 'Error sending order confirmation email' });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
