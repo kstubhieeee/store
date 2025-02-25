@@ -1057,6 +1057,7 @@ const handlePayPalSuccess = async (userId, paymentId, items, totalAmount) => {
   }
 };
 
+// Modify the send-order-confirmation endpoint to also notify merchants
 app.post('/api/send-order-confirmation', async (req, res) => {
   try {
     const {
@@ -1070,8 +1071,17 @@ app.post('/api/send-order-confirmation', async (req, res) => {
       paymentMethod
     } = req.body;
 
-    // Create HTML content for the email
-    const itemsList = items.map(item => `
+    // Group items by merchant
+    const merchantItems = {};
+    for (const item of items) {
+      if (!merchantItems[item.merchantId]) {
+        merchantItems[item.merchantId] = [];
+      }
+      merchantItems[item.merchantId].push(item);
+    }
+
+    // Create and send customer email
+    const customerItemsList = items.map(item => `
       <tr>
         <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">
           ${item.name}
@@ -1088,7 +1098,7 @@ app.post('/api/send-order-confirmation', async (req, res) => {
       </tr>
     `).join('');
 
-    const emailHtml = `
+    const customerEmailHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 30px;">
           <h1 style="color: #2563eb; margin: 0;">TechMart</h1>
@@ -1117,7 +1127,7 @@ app.post('/api/send-order-confirmation', async (req, res) => {
             </tr>
           </thead>
           <tbody>
-            ${itemsList}
+            ${customerItemsList}
           </tbody>
           <tfoot>
             <tr>
@@ -1139,18 +1149,109 @@ app.post('/api/send-order-confirmation', async (req, res) => {
       </div>
     `;
 
-    // Send the email
+    // Send customer email
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to,
       subject,
-      html: emailHtml
+      html: customerEmailHtml
     });
 
-    res.json({ message: 'Order confirmation email sent successfully' });
+    // Send notification emails to merchants
+    for (const merchantId in merchantItems) {
+      try {
+        // Get merchant details from database
+        const merchant = await db.collection("merchants").findOne({ _id: new ObjectId(merchantId) });
+        if (!merchant) continue;
+
+        const merchantItemsList = merchantItems[merchantId].map(item => `
+          <tr>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">
+              ${item.name}
+            </td>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">
+              ${item.cartQuantity}
+            </td>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right;">
+              $${(item.price * (1 - item.discount / 100)).toFixed(2)}
+            </td>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right;">
+              $${(item.price * (1 - item.discount / 100) * item.cartQuantity).toFixed(2)}
+            </td>
+          </tr>
+        `).join('');
+
+        const merchantTotal = merchantItems[merchantId].reduce((sum, item) => 
+          sum + (item.price * (1 - item.discount / 100) * item.cartQuantity), 0
+        );
+
+        const merchantEmailHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <h1 style="color: #2563eb; margin: 0;">TechMart</h1>
+              <p style="color: #64748b; margin-top: 5px;">New Order Notification</p>
+            </div>
+
+            <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+              <h2 style="color: #1e293b; margin-top: 0;">New Order Received!</h2>
+              <p style="color: #64748b;">Hello ${merchant.businessName},</p>
+              <p style="color: #64748b;">You have received a new order from ${customerName}.</p>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+              <h3 style="color: #1e293b; margin-bottom: 10px;">Order Details</h3>
+              <p style="color: #64748b; margin: 5px 0;">Order ID: ${orderId}</p>
+              <p style="color: #64748b; margin: 5px 0;">Order Date: ${new Date().toLocaleDateString()}</p>
+              <p style="color: #64748b; margin: 5px 0;">Customer: ${customerName}</p>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+              <thead>
+                <tr style="background-color: #f1f5f9;">
+                  <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0;">Item</th>
+                  <th style="padding: 12px; text-align: center; border-bottom: 2px solid #e2e8f0;">Qty</th>
+                  <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e2e8f0;">Price</th>
+                  <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e2e8f0;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${merchantItemsList}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="3" style="padding: 12px; text-align: right; font-weight: bold;">Total Amount:</td>
+                  <td style="padding: 12px; text-align: right; font-weight: bold;">$${merchantTotal.toFixed(2)}</td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <div style="margin-bottom: 20px;">
+              <h3 style="color: #1e293b; margin-bottom: 10px;">Shipping Address</h3>
+              <p style="color: #64748b; white-space: pre-line;">${shippingAddress}</p>
+            </div>
+
+            <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+              <p style="color: #64748b; margin-bottom: 10px;">Please process this order as soon as possible.</p>
+              <p style="color: #64748b; margin: 0;">Thank you for being a valued merchant on TechMart!</p>
+            </div>
+          </div>
+        `;
+
+        await transporter.sendMail({
+          from: process.env.EMAIL_USER,
+          to: merchant.email,
+          subject: `New Order Received - Order #${orderId}`,
+          html: merchantEmailHtml
+        });
+      } catch (error) {
+        console.error(`Error sending email to merchant ${merchantId}:`, error);
+      }
+    }
+
+    res.json({ message: 'Order confirmation emails sent successfully' });
   } catch (error) {
-    console.error('Error sending order confirmation email:', error);
-    res.status(500).json({ message: 'Error sending order confirmation email' });
+    console.error('Error sending order confirmation emails:', error);
+    res.status(500).json({ message: 'Error sending order confirmation emails' });
   }
 });
 
