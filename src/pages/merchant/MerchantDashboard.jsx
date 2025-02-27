@@ -45,6 +45,10 @@ function MerchantDashboard() {
     navigate('/merchant/add');
   };
 
+  const handleAddCoupon = () => {
+    navigate('/merchant/coupon');
+  };
+
   const columns = [
     {
       name: "Image",
@@ -177,6 +181,12 @@ function MerchantDashboard() {
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               Add New Product
+            </button>
+            <button
+              onClick={handleAddCoupon}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              Add a Coupon
             </button>
             <button
               onClick={handleLogout}

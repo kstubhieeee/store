@@ -1255,6 +1255,148 @@ app.post('/api/send-order-confirmation', async (req, res) => {
   }
 });
 
+// Coupon Routes
+app.post("/api/coupons", async (req, res) => {
+  try {
+    const {
+      code,
+      discountPercentage,
+      expiryDate,
+      description,
+      merchantId,
+      merchantName,
+      isActive
+    } = req.body;
+
+    const coupon = {
+      code,
+      discountPercentage: Number(discountPercentage),
+      expiryDate: new Date(expiryDate),
+      description,
+      merchantId,
+      merchantName,
+      isUsed: false,
+      isActive: isActive || true,
+      createdAt: new Date()
+    };
+
+    const result = await db.collection("coupons").insertOne(coupon);
+    res.status(201).json({ ...coupon, _id: result.insertedId });
+  } catch (error) {
+    console.error("Error creating coupon:", error);
+    res.status(500).json({ message: "Error creating coupon" });
+  }
+});
+
+app.get("/api/coupons/merchant/:merchantId", async (req, res) => {
+  try {
+    const { merchantId } = req.params;
+    const coupons = await db.collection("coupons")
+      .find({ merchantId })
+      .sort({ createdAt: -1 })
+      .toArray();
+    res.json(coupons);
+  } catch (error) {
+    console.error("Error fetching merchant coupons:", error);
+    res.status(500).json({ message: "Error fetching coupons" });
+  }
+});
+
+app.get("/api/coupons/:code", async (req, res) => {
+  try {
+    const { code } = req.params;
+    const coupon = await db.collection("coupons").findOne({ 
+      code, 
+      isUsed: false,
+      isActive: true,
+      expiryDate: { $gt: new Date() }
+    });
+    
+    if (!coupon) {
+      return res.status(404).json({ message: "Coupon not found or expired" });
+    }
+    
+    res.json(coupon);
+  } catch (error) {
+    console.error("Error fetching coupon:", error);
+    res.status(500).json({ message: "Error fetching coupon" });
+  }
+});
+
+app.put("/api/coupons/:id/use", async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid coupon ID" });
+    }
+    
+    const result = await db.collection("coupons").findOneAndUpdate(
+      { _id: new ObjectId(id), isUsed: false, isActive: true, expiryDate: { $gt: new Date() } },
+      { $set: { isUsed: true, usedAt: new Date() } },
+      { returnDocument: "after" }
+    );
+    
+    if (!result) {
+      return res.status(404).json({ message: "Coupon not found, already used, or expired" });
+    }
+    
+    res.json(result);
+  } catch (error) {
+    console.error("Error using coupon:", error);
+    res.status(500).json({ message: "Error using coupon" });
+  }
+});
+
+app.delete("/api/coupons/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid coupon ID" });
+    }
+    
+    const result = await db.collection("coupons").deleteOne({ _id: new ObjectId(id) });
+    
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: "Coupon not found" });
+    }
+    
+    res.json({ message: "Coupon deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting coupon:", error);
+    res.status(500).json({ message: "Error deleting coupon" });
+  }
+});
+
+// Add this to the checkout process
+app.post("/api/checkout/apply-coupon", async (req, res) => {
+  try {
+    const { code, userId } = req.body;
+    
+    const coupon = await db.collection("coupons").findOne({ 
+      code, 
+      isUsed: false,
+      isActive: true,
+      expiryDate: { $gt: new Date() }
+    });
+    
+    if (!coupon) {
+      return res.status(404).json({ message: "Invalid or expired coupon" });
+    }
+    
+    res.json({ 
+      couponId: coupon._id,
+      discountPercentage: coupon.discountPercentage,
+      merchantId: coupon.merchantId
+    });
+  } catch (error) {
+    console.error("Error applying coupon:", error);
+    res.status(500).json({ message: "Error applying coupon" });
+  }
+});
+
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
