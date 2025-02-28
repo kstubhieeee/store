@@ -11,6 +11,11 @@ function Checkout() {
   const [loading, setLoading] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState('domestic');
   const [totalAmount, setTotalAmount] = useState(0);
+  const [originalTotal, setOriginalTotal] = useState(0);
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState('');
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -32,6 +37,7 @@ function Checkout() {
         return sum + (price * item.cartQuantity);
       }, 0);
       setTotalAmount(total);
+      setOriginalTotal(total);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching cart:', error);
@@ -40,8 +46,82 @@ function Checkout() {
     }
   };
 
+  const handleCouponChange = (e) => {
+    setCouponCode(e.target.value);
+    setCouponError('');
+  };
+
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError('Please enter a coupon code');
+      return;
+    }
+
+    setCouponLoading(true);
+    setCouponError('');
+
+    try {
+      const response = await axios.post('http://localhost:5000/api/checkout/apply-coupon', {
+        code: couponCode,
+        userId: user._id
+      });
+
+      const { couponId, discountPercentage, merchantId } = response.data;
+
+      // Check if the coupon is applicable to any items in the cart
+      const applicableItems = cartItems.filter(item => item.merchantId === merchantId);
+      
+      if (applicableItems.length === 0) {
+        setCouponError('This coupon is not applicable to any items in your cart');
+        setCouponLoading(false);
+        return;
+      }
+
+      // Calculate discount only on applicable items
+      let discountAmount = 0;
+      applicableItems.forEach(item => {
+        const itemPrice = item.price * (1 - item.discount / 100) * item.cartQuantity;
+        discountAmount += (itemPrice * discountPercentage / 100);
+      });
+
+      // Apply the discount to the total
+      const newTotal = originalTotal - discountAmount;
+      setTotalAmount(newTotal);
+      
+      setAppliedCoupon({
+        id: couponId,
+        code: couponCode,
+        discountPercentage,
+        discountAmount,
+        merchantId
+      });
+
+      toast.success(`Coupon applied! You saved $${discountAmount.toFixed(2)}`);
+    } catch (error) {
+      setCouponError(error.response?.data?.message || 'Invalid or expired coupon');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setTotalAmount(originalTotal);
+    setCouponCode('');
+    toast.success('Coupon removed');
+  };
+
   const handleRazorpayPayment = async () => {
     try {
+      // Mark coupon as used if one is applied
+      if (appliedCoupon) {
+        try {
+          await axios.put(`http://localhost:5000/api/coupons/${appliedCoupon.id}/use`);
+        } catch (error) {
+          console.error('Error marking coupon as used:', error);
+        }
+      }
+
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: totalAmount * 100,
@@ -55,7 +135,8 @@ function Checkout() {
               paymentId: response.razorpay_payment_id,
               items: cartItems,
               totalAmount,
-              paymentMethod: 'razorpay'
+              paymentMethod: 'razorpay',
+              appliedCoupon
             }
           });
         },
@@ -97,6 +178,15 @@ function Checkout() {
         });
       },
       onApprove: async (data, actions) => {
+        // Mark coupon as used if one is applied
+        if (appliedCoupon) {
+          try {
+            await axios.put(`http://localhost:5000/api/coupons/${appliedCoupon.id}/use`);
+          } catch (error) {
+            console.error('Error marking coupon as used:', error);
+          }
+        }
+
         const order = await actions.order.capture();
         navigate('/payment/result', {
           state: {
@@ -104,7 +194,8 @@ function Checkout() {
             paymentId: order.id,
             items: cartItems,
             totalAmount,
-            paymentMethod: 'paypal'
+            paymentMethod: 'paypal',
+            appliedCoupon
           }
         });
       },
@@ -190,6 +281,55 @@ function Checkout() {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Coupon Code Section */}
+          <div className="mb-8 border-t border-gray-700 pt-6">
+            <h3 className="text-lg font-semibold text-white mb-4">Apply Coupon</h3>
+            {appliedCoupon ? (
+              <div className="bg-gray-700 p-4 rounded-lg mb-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-white font-medium">{appliedCoupon.code}</p>
+                    <p className="text-sm text-gray-400">
+                      {appliedCoupon.discountPercentage}% off - You saved ${appliedCoupon.discountAmount.toFixed(2)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={removeCoupon}
+                    className="text-red-400 hover:text-red-300 transition-colors"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={couponCode}
+                  onChange={handleCouponChange}
+                  placeholder="Enter coupon code"
+                  className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                />
+                <button
+                  onClick={applyCoupon}
+                  disabled={couponLoading}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {couponLoading ? 'Applying...' : 'Apply'}
+                </button>
+              </div>
+            )}
+            {couponError && (
+              <p className="mt-2 text-red-400 text-sm">{couponError}</p>
+            )}
+            {appliedCoupon && (
+              <div className="mt-4 flex justify-between text-white">
+                <span>Subtotal:</span>
+                <span>${originalTotal.toFixed(2)}</span>
+              </div>
+            )}
           </div>
 
           <div className="mb-8">

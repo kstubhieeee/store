@@ -13,6 +13,7 @@ function ResultPage() {
   const paymentId = location.state?.paymentId;
   const cartItems = location.state?.items;
   const totalAmount = location.state?.totalAmount;
+  const appliedCoupon = location.state?.appliedCoupon;
 
   const [transactionCreated, setTransactionCreated] = useState(false);
   const transactionCreatedRef = useRef(false);
@@ -44,7 +45,13 @@ function ResultPage() {
         totalAmount,
         paymentMethod: location.state?.paymentMethod || 'card',
         paymentId,
-        status: 'completed'
+        status: 'completed',
+        couponApplied: appliedCoupon ? {
+          couponId: appliedCoupon.id,
+          code: appliedCoupon.code,
+          discountPercentage: appliedCoupon.discountPercentage,
+          discountAmount: appliedCoupon.discountAmount
+        } : null
       });
     } catch (error) {
       console.error('Error creating transaction:', error);
@@ -97,6 +104,16 @@ function ResultPage() {
                 </span>
               )}
             </p>
+            {appliedCoupon && (
+              <div className="mt-4 mb-4 p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                <p className="text-purple-400 text-sm">
+                  Coupon "{appliedCoupon.code}" applied: {appliedCoupon.discountPercentage}% off
+                </p>
+                <p className="text-purple-400 text-sm">
+                  You saved ${appliedCoupon.discountAmount.toFixed(2)}
+                </p>
+              </div>
+            )}
             <p className="text-gray-300 mt-4">
               A confirmation email has been sent to your email address.
             </p>
