@@ -21,6 +21,7 @@ const MerchantLogin = lazy(() => import("./pages/merchant/MerchantLogin"));
 const MerchantDashboard = lazy(() => import("./pages/merchant/MerchantDashboard"));
 const MerchantAddProduct = lazy(() => import("./pages/merchant/MerchantAddProduct"));
 const MerchantCoupon = lazy(() => import("./pages/merchant/MerchantCoupon"));
+const MerchantCustomerListing = lazy(() => import("./pages/merchant/MerchantCustomerListing"));
 const TransactionHistory = lazy(() => import("./pages/TransactionHistory"));
 
 // Loading component for Suspense fallback
@@ -84,6 +85,14 @@ function App() {
             element={
               <ProtectedMerchantRoute>
                 <MerchantCoupon />
+              </ProtectedMerchantRoute>
+            }
+          />
+          <Route
+            path="/merchant/customer-listing"
+            element={
+              <ProtectedMerchantRoute>
+                <MerchantCustomerListing />
               </ProtectedMerchantRoute>
             }
           />

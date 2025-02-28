@@ -48,6 +48,10 @@ function MerchantDashboard() {
   const handleAddCoupon = () => {
     navigate('/merchant/coupon');
   };
+  
+  const handleCustomerListing = () => {
+    navigate('/merchant/customer-listing');
+  };
 
   const columns = [
     {
@@ -187,6 +191,12 @@ function MerchantDashboard() {
               className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
               Add a Coupon
+            </button>
+            <button
+              onClick={handleCustomerListing}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Customer Listing
             </button>
             <button
               onClick={handleLogout}

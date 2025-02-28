@@ -992,6 +992,68 @@ app.get("/api/transactions/:userId", async (req, res) => {
   }
 });
 
+// Get merchant's customer transactions
+app.get("/api/merchant/:merchantId/customers", async (req, res) => {
+  try {
+    const { merchantId } = req.params;
+
+    // Get all transactions
+    const allTransactions = await db
+      .collection("transactions")
+      .find({})
+      .sort({ date: -1 })
+      .toArray();
+
+    // Filter transactions that contain products from this merchant
+    const merchantTransactions = [];
+    
+    for (const transaction of allTransactions) {
+      const itemsWithDetails = await Promise.all(
+        transaction.items.map(async (item) => {
+          const product = await db
+            .collection("products")
+            .findOne({ _id: new ObjectId(item.productId) });
+          return {
+            ...product,
+            quantity: item.quantity,
+            _id: item.productId,
+          };
+        })
+      );
+      
+      // Check if any product in this transaction belongs to the merchant
+      const merchantItems = itemsWithDetails.filter(
+        item => item && item.merchantId === merchantId
+      );
+      
+      if (merchantItems.length > 0) {
+        // Get customer details
+        const customer = await db
+          .collection("users")
+          .findOne({ _id: new ObjectId(transaction.userId) });
+        
+        if (customer) {
+          // Remove sensitive information
+          delete customer.password;
+          delete customer.verificationToken;
+          delete customer.tokenExpiry;
+          
+          merchantTransactions.push({
+            ...transaction,
+            items: merchantItems, // Only include merchant's items
+            customer: customer
+          });
+        }
+      }
+    }
+
+    res.json(merchantTransactions);
+  } catch (error) {
+    console.error("Error fetching merchant customers:", error);
+    res.status(500).json({ message: "Error fetching merchant customers" });
+  }
+});
+
 // Update transaction status
 app.put("/api/transactions/:id/status", async (req, res) => {
   try {
