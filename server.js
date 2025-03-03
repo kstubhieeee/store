@@ -1458,6 +1458,55 @@ app.post("/api/checkout/apply-coupon", async (req, res) => {
   }
 });
 
+// Send coupon to selected customers
+app.post('/api/coupons/send', async (req, res) => {
+  try {
+    const { couponId, customerIds } = req.body;
+
+    // Validate couponId and customerIds
+    if (!ObjectId.isValid(couponId) || !Array.isArray(customerIds) || customerIds.length === 0) {
+      return res.status(400).json({ message: "Invalid coupon ID or customer IDs" });
+    }
+
+    // Fetch the coupon details
+    const coupon = await db.collection("coupons").findOne({ _id: new ObjectId(couponId) });
+    if (!coupon) {
+      return res.status(404).json({ message: "Coupon not found" });
+    }
+
+    // Fetch the customer details
+    const customers = await db.collection("users").find({ _id: { $in: customerIds.map(id => new ObjectId(id)) } }).toArray();
+    if (customers.length === 0) {
+      return res.status(404).json({ message: "No customers found" });
+    }
+
+    // Send the coupon to each customer via email
+    for (const customer of customers) {
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: customer.email,
+        subject: `You've received a coupon from ${coupon.merchantName}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #2563eb;">Hello ${customer.firstName} ${customer.lastName},</h2>
+            <p>You've received a coupon from ${coupon.merchantName}!</p>
+            <p>Coupon Code: <strong>${coupon.code}</strong></p>
+            <p>Discount: <strong>${coupon.discountPercentage}% off</strong></p>
+            <p>Expires on: <strong>${new Date(coupon.expiryDate).toLocaleDateString()}</strong></p>
+            <p>Description: ${coupon.description}</p>
+            <p>Use this coupon at checkout to avail the discount.</p>
+            <p>Best regards,<br>The TechMart Team</p>
+          </div>
+        `
+      });
+    }
+
+    res.json({ message: "Coupon sent to selected customers successfully" });
+  } catch (error) {
+    console.error("Error sending coupon:", error);
+    res.status(500).json({ message: "Error sending coupon" });
+  }
+});
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
